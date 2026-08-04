@@ -1,5 +1,3 @@
-// ─── LUTE MD · INDEX ─────────────────────────────────────────────────────────
-
 import './settings.js'
 import chalk from 'chalk'
 import pino from 'pino'
@@ -7,52 +5,55 @@ import qrcode from 'qrcode-terminal'
 import fs from 'fs'
 import path from 'path'
 import readlineSync from 'readline-sync'
-import { fileURLToPath } from 'url'
+import { fileURLToPath, pathToFileURL } from 'url'
 import { readdirSync } from 'fs'
 import { join, resolve } from 'path'
-import { pathToFileURL } from 'url'
-import {
-    Browsers, makeWASocket, makeCacheableSignalKeyStore,
-    useMultiFileAuthState, fetchLatestBaileysVersion,
-    jidDecode, DisconnectReason
-} from '@whiskeysockets/baileys'
 import { exec } from 'child_process'
+import {
+    Browsers,
+    makeWASocket,
+    makeCacheableSignalKeyStore,
+    useMultiFileAuthState,
+    fetchLatestBaileysVersion,
+    jidDecode,
+    DisconnectReason
+} from '@whiskeysockets/baileys'
 import { serialize } from './core/serialize.js'
 import { database } from './core/database.js'
 import { CmdsLoader } from './core/system/cmdsLoader.js'
 import { mainHandler } from './main.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const cmdsDir   = path.join(__dirname, 'cmds')
 
-// ── Logger ────────────────────────────────────────────────────────────────────
-const log = {
-    info:    m => console.log(chalk.bgBlue.white.bold(' INFO '),    chalk.white(m)),
-    success: m => console.log(chalk.bgGreen.black.bold(' OK '),     chalk.greenBright(m)),
-    warn:    m => console.log(chalk.bgYellow.black.bold(' WARN '),  chalk.yellow(m)),
-    error:   m => console.log(chalk.bgRed.white.bold(' ERROR '),    chalk.redBright(m)),
-}
+global.conns = []
 
-// ── Banner ────────────────────────────────────────────────────────────────────
 const W = chalk.hex('#ffffff')
 const G = chalk.hex('#d4af37')
 const R = chalk.hex('#8b0000')
+const D = chalk.hex('#1a1a1a')
+
+const log = {
+    info:    m => console.log(G('  ⚔  ') + chalk.white(m)),
+    success: m => console.log(G('  ✦  ') + chalk.greenBright(m)),
+    warn:    m => console.log(G('  ▲  ') + chalk.yellow(m)),
+    error:   m => console.log(G('  ✖  ') + chalk.redBright(m)),
+}
 
 const BANNER = `
-${G('╔══════════════════════════════════════════╗')}
-${G('║')}  ${W('⚔')}  ${W.bold('L U T E  ·  M D')}  ${W('⚔')}                  ${G('║')}
-${G('║')}  ${chalk.gray('Hazbin Hotel · Exterminadora')}             ${G('║')}
-${G('║')}  ${chalk.gray('ZoreDevTeam · v' + global.botVersion)}                  ${G('║')}
-${G('╚══════════════════════════════════════════╝')}
+${G('  ╔════════════════════════════════════════════╗')}
+${G('  ║')}                                            ${G('║')}
+${G('  ║')}    ${W.bold('⚔  L U T E  ·  M D  ⚔')}               ${G('║')}
+${G('  ║')}    ${chalk.gray('Exterminadora · Hazbin Hotel')}           ${G('║')}
+${G('  ║')}    ${chalk.gray('ZoreDevTeam · v' + global.botVersion)}                  ${G('║')}
+${G('  ║')}                                            ${G('║')}
+${G('  ╚════════════════════════════════════════════╝')}
 `
 
-// ── Loader de comandos ────────────────────────────────────────────────────────
-const cmdsDir = path.join(__dirname, 'cmds')
-const loader  = new CmdsLoader(cmdsDir, log)
-
-// ── Loader de eventos ─────────────────────────────────────────────────────────
+const loader = new CmdsLoader(cmdsDir, log)
 const loadedEvents = new Set()
 
-async function loadEvents(conn) {
+async function loadEventFiles(conn) {
     const eventsPath = resolve('./events')
     let files = []
     try { files = readdirSync(eventsPath).filter(f => f.endsWith('.js')) } catch { return }
@@ -67,66 +68,68 @@ async function loadEvents(conn) {
                 try { mod.run(conn, data) } catch (e) { log.error(`[${file}] ${e.message}`) }
             })
             loadedEvents.add(file)
-            log.success(`Evento: ${file} → ${mod.event}`)
+            log.success(`Evento: ${file}`)
         } catch (e) { log.error(`Evento ${file}: ${e.message}`) }
     }
 }
 
-// ── Sesión ────────────────────────────────────────────────────────────────────
-fs.mkdirSync(global.sessionName, { recursive: true })
+fs.mkdirSync(global.sessionName || './sessions/owner', { recursive: true })
 
-const methodQR   = process.argv.includes('--qr')
-const methodCode = process.argv.includes('--code')
-const DIGITS     = s => String(s).replace(/\D/g, '')
+const useQR   = process.argv.includes('--qr')
+const useCode = process.argv.includes('--code')
+const DIGITS  = s => String(s).replace(/\D/g, '')
 
-function normalizePhone(input) {
-    let s = DIGITS(input)
-    if (!s) return ''
-    if (s.startsWith('0')) s = s.replace(/^0+/, '')
-    if (s.length === 10 && s.startsWith('3')) s = '57' + s
-    return s
+function normalizePhone(raw) {
+    let n = DIGITS(raw)
+    if (!n) return ''
+    if (n.startsWith('0')) n = n.replace(/^0+/, '')
+    if (n.length === 10 && n.startsWith('3')) n = '57' + n
+    if (n.startsWith('52') && !n.startsWith('521') && n.length >= 12) n = '521' + n.slice(2)
+    if (n.startsWith('54') && !n.startsWith('549') && n.length >= 11) n = '549' + n.slice(2)
+    return n
 }
 
 let opcion = '', phoneNumber = ''
+const credsPath = path.join(global.sessionName || './sessions/owner', 'creds.json')
 
-if (methodQR)   opcion = '1'
-else if (methodCode) opcion = '2'
-else if (!fs.existsSync(path.join(global.sessionName, 'creds.json'))) {
+if (useQR)        opcion = '1'
+else if (useCode) opcion = '2'
+else if (!fs.existsSync(credsPath)) {
+    console.log(BANNER)
     opcion = readlineSync.question(
-        chalk.bold('\nSelecciona una opción:\n') +
-        chalk.blueBright('1. Código QR\n') +
-        chalk.cyan('2. Código de 8 dígitos\n--> ')
+        G('\n  ⚔  ') + chalk.white('Selecciona método de conexión:\n') +
+        G('     1. ') + chalk.white('Código QR\n') +
+        G('     2. ') + chalk.white('Código de 8 dígitos\n') +
+        G('  →  ')
     )
     while (!/^[1-2]$/.test(opcion)) {
         log.error('Solo 1 o 2.')
-        opcion = readlineSync.question('--> ')
+        opcion = readlineSync.question(G('  →  '))
     }
     if (opcion === '2') {
-        console.log(chalk.yellow('\nNúmero de WhatsApp (ej: +573001234567):\n'))
-        phoneNumber = normalizePhone(readlineSync.question(G('⚔ --> ')))
+        console.log('\n' + chalk.gray('  Número de WhatsApp (ej: +573001234567)\n'))
+        phoneNumber = normalizePhone(readlineSync.question(G('  ⚔  ')))
     }
 }
 
-// ── startBot ──────────────────────────────────────────────────────────────────
 async function startBot() {
-    const { state, saveCreds } = await useMultiFileAuthState(global.sessionName)
+    const { state, saveCreds } = await useMultiFileAuthState(global.sessionName || './sessions/owner')
     const { version }          = await fetchLatestBaileysVersion()
-    const logger               = pino({ level: 'silent' })
 
     const conn = makeWASocket({
         version,
-        logger,
-        printQRInTerminal:          false,
-        browser:                    Browsers.macOS('Chrome'),
+        logger:                         pino({ level: 'silent' }),
+        printQRInTerminal:              false,
+        browser:                        Browsers.macOS('Chrome'),
         auth: {
             creds: state.creds,
-            keys:  makeCacheableSignalKeyStore(state.keys, logger)
+            keys:  makeCacheableSignalKeyStore(state.keys, pino({ level: 'silent' }))
         },
-        markOnlineOnConnect:        false,
+        markOnlineOnConnect:            false,
         generateHighQualityLinkPreview: true,
-        syncFullHistory:            false,
-        getMessage:                 async () => '',
-        keepAliveIntervalMs:        45_000,
+        syncFullHistory:                false,
+        getMessage:                     async () => '',
+        keepAliveIntervalMs:            45_000,
     })
 
     global.conn = conn
@@ -142,58 +145,65 @@ async function startBot() {
 
     conn.ev.on('creds.update', saveCreds)
 
-    // Pairing code
-    if (opcion === '2' && !fs.existsSync(path.join(global.sessionName, 'creds.json'))) {
+    if (opcion === '2' && !fs.existsSync(credsPath)) {
         setTimeout(async () => {
             try {
                 if (!state.creds.registered) {
-                    const pairing = await conn.requestPairingCode(phoneNumber)
-                    const code    = pairing?.match(/.{1,4}/g)?.join('-') || pairing
-                    console.log(G('\n⚔━━━━━━━━━━━━━━━━━━━━⚔'))
-                    console.log(chalk.white.bold('  CÓDIGO: ') + chalk.yellowBright(code))
-                    console.log(G('⚔━━━━━━━━━━━━━━━━━━━━⚔\n'))
+                    const raw  = await conn.requestPairingCode(phoneNumber)
+                    const code = raw?.match(/.{1,4}/g)?.join('-') || raw
+                    console.log(
+                        G('\n  ╔══════════════════════╗\n') +
+                        G('  ║  ') + W.bold('CÓDIGO DE EMPAREJAMIENTO') + G('  ║\n') +
+                        G('  ╠══════════════════════╣\n') +
+                        G('  ║  ') + chalk.yellowBright.bold(code) + G('         ║\n') +
+                        G('  ╚══════════════════════╝\n')
+                    )
                 }
             } catch (e) { log.error(`Pairing: ${e.message}`) }
         }, 3000)
     }
 
-    // Conexión
     conn.ev.on('connection.update', async ({ qr, connection, lastDisconnect }) => {
         if (qr && opcion === '1') {
-            console.log(G('\n⚔ Escanea el QR:\n'))
+            console.log(G('\n  ⚔  Escanea el código QR:\n'))
             qrcode.generate(qr, { small: true })
         }
 
         if (connection === 'open') {
             console.log(BANNER)
-            log.success(`Conectada como: ${conn.user?.name || 'Lute'}`)
-            await loadEvents(conn)
+            log.success(`Conectada como: ${chalk.yellowBright(conn.user?.name || 'Lute')}`)
+            log.info(`Comandos cargados: ${chalk.yellowBright(loader.getAll().size)}`)
+            await loadEventFiles(conn)
         }
 
         if (connection === 'close') {
-            const reason = lastDisconnect?.error?.output?.statusCode
-            const RETRY  = [
+            const code = lastDisconnect?.error?.output?.statusCode
+            const RETRY = [
                 DisconnectReason.connectionLost,
                 DisconnectReason.connectionClosed,
                 DisconnectReason.restartRequired,
                 DisconnectReason.timedOut,
                 DisconnectReason.badSession,
             ]
-            if (RETRY.includes(reason)) {
-                log.warn(`Reconectando... (${reason})`)
+
+            if (RETRY.includes(code)) {
+                log.warn(`Reconectando... (${code})`)
                 startBot()
-            } else if ([DisconnectReason.loggedOut, DisconnectReason.forbidden].includes(reason)) {
-                log.warn('Sesión terminada.')
-                exec(`rm -rf ${global.sessionName}/*`)
+            } else if (code === DisconnectReason.loggedOut || code === DisconnectReason.forbidden) {
+                log.warn('Sesión terminada. Eliminando credenciales...')
+                exec(`rm -rf ${global.sessionName || './sessions/owner'}/*`)
                 process.exit(1)
+            } else if (code === DisconnectReason.multideviceMismatch) {
+                log.warn('Conflicto multidispositivo. Reiniciando...')
+                exec(`rm -rf ${global.sessionName || './sessions/owner'}/*`)
+                process.exit(0)
             } else {
-                log.error(`Desconexión: ${reason}`)
+                log.error(`Desconexión inesperada: ${code}`)
                 startBot()
             }
         }
     })
 
-    // Mensajes
     conn.ev.on('messages.upsert', async ({ messages, type }) => {
         try {
             if (type !== 'notify') return
@@ -203,13 +213,12 @@ async function startBot() {
             if (m.key?.id?.startsWith('BAE5') && m.key.id.length === 16) return
             m = serialize(conn, m)
             await mainHandler(m, conn, loader)
-        } catch (e) { log.error(`mensaje: ${e.message}`) }
+        } catch (e) { log.error(`msg: ${e.message}`) }
     })
 }
 
-// ── Boot ──────────────────────────────────────────────────────────────────────
 ;(async () => {
-    console.log(G('\n⚔ Iniciando Lute MD...\n'))
+    console.log(G('\n  ⚔  Iniciando Lute MD...\n'))
     await database.read()
     log.success('Base de datos lista.')
     await loader.loadAll()
