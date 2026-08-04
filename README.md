@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://i.pinimg.com/originals/8c/8f/9e/8c8f9e0e0e0e0e0e0e0e0e0e0e0e0e0e.jpg" width="100%" alt="Lute Banner"/>
+<img src="https://files.catbox.moe/woge4g.jpg" width="100%" alt="Lute Banner"/>
 
 <br/>
 
