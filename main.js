@@ -1,5 +1,3 @@
-// ─── LUTE MD · MAIN HANDLER ──────────────────────────────────────────────────
-
 import './settings.js'
 import chalk from 'chalk'
 import { database } from './core/database.js'
@@ -183,7 +181,9 @@ export async function mainHandler(m, conn, loader) {
         }
 
         // ── Ejecutar ──────────────────────────────────────────────────────
-        await cmd(m, {
+        const fn = typeof cmd === 'function' ? cmd : (cmd.default || cmd.handler)
+        if (typeof fn !== 'function') throw new Error('cmd is not a function')
+        await fn(m, {
             conn,
             args,
             text,
