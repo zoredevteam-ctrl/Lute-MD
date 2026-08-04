@@ -78,7 +78,20 @@ export class CmdsLoader {
             for (const cmd of cmds) {
                 if (!cmd) continue
                 const key = String(cmd).toLowerCase()
-                this.commands.set(key, { ...mod, __file: filePath })
+                const fn = mod.default || mod
+            fn.__file = filePath
+            fn.command = mod.command
+            fn.tags    = mod.tags
+            fn.owner   = mod.owner
+            fn.rowner  = mod.rowner
+            fn.premium = mod.premium
+            fn.group   = mod.group
+            fn.admin   = mod.admin
+            fn.botAdmin= mod.botAdmin
+            fn.private = mod.private
+            fn.register= mod.register
+            fn.limit   = mod.limit
+            this.commands.set(key, fn)
             }
         } catch (e) {
             this.log.error(`Error cargando ${filePath}: ${e.message}`)
