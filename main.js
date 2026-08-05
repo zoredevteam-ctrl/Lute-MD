@@ -1,6 +1,6 @@
 import './settings.js'
 import chalk from 'chalk'
-import { watchFile, unwatchFile, fileURLToPath as _ftu } from 'fs'
+import { watchFile, unwatchFile } from 'fs'
 import { fileURLToPath } from 'url'
 import { database } from './core/database.js'
 
