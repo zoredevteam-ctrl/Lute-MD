@@ -1,21 +1,24 @@
 import './settings.js'
 import chalk from 'chalk'
+import { watchFile, unwatchFile, fileURLToPath as _ftu } from 'fs'
+import { fileURLToPath } from 'url'
 import { database } from './core/database.js'
 
-const PREFIXES = ['#', '.', '/', '!']
+const scriptPath = fileURLToPath(import.meta.url)
 
-const getPrefix = (body) => PREFIXES.find(p => body?.startsWith(p)) || null
+const isNumber = x => typeof x === 'number' && !isNaN(x)
+const delay    = ms => isNumber(ms) && new Promise(r => setTimeout(r, ms))
 
-const normalizeCore = (v) => (v + '').replace(/[^0-9]/g, '').split(':')[0]
+const normalizeCore = v => (v + '').replace(/[^0-9]/g, '').split(':')[0]
 
 function isOwnerJid(jid) {
     const num = normalizeCore(jid)
-    return global.owner.some(o => normalizeCore(Array.isArray(o) ? o[0] : o) === num)
+    return (global.owner || []).some(o => normalizeCore(Array.isArray(o) ? o[0] : o) === num)
 }
 
 function isRootOwnerJid(jid) {
     const num = normalizeCore(jid)
-    return global.owner.some(o => Array.isArray(o) && normalizeCore(o[0]) === num && o[2] === true)
+    return (global.owner || []).some(o => Array.isArray(o) && normalizeCore(o[0]) === num && o[2] === true)
 }
 
 function isPremiumJid(jid) {
@@ -24,7 +27,7 @@ function isPremiumJid(jid) {
     return prems.includes(num) || !!database.data?.users?.[jid]?.premium
 }
 
-// ── Cache de groupMetadata ────────────────────────────────────────────────────
+// ── Cache groupMetadata ───────────────────────────────────────────────────────
 const metaCache = new Map()
 const META_TTL  = 2 * 60 * 1000
 
@@ -54,7 +57,7 @@ function isDuplicate(id) {
     return false
 }
 
-// ── Similitud ─────────────────────────────────────────────────────────────────
+// ── Similitud de comandos ─────────────────────────────────────────────────────
 const similarity = (a, b) => {
     let m = 0
     for (let i = 0; i < Math.min(a.length, b.length); i++) if (a[i] === b[i]) m++
@@ -62,36 +65,51 @@ const similarity = (a, b) => {
 }
 
 // ── Mensajes de error estilo Lute ─────────────────────────────────────────────
-const LUTE = {
-    notFound: (prefix, cmd, similares) =>
-        `⚔️ *COMANDO INVÁLIDO*\n` +
-        `> El comando *${prefix}${cmd}* no existe en mi registro.\n` +
-        `> Usa *${prefix}menu* para ver los disponibles.\n\n` +
-        (similares.length ? `*Similares:*\n${similares.map(s => `> ✦ *${prefix}${s.cmd}* — ${s.score}%`).join('\n')}` : ''),
+global.dfail = async (type, m, conn, prefix = '#') => {
+    const msgs = {
+        rowner:   `*😼* Está función solo puede ser usada por mi *creador.*\n> ✰ 𝒜𝒶𝓇𝑜𝓂 (•̀ᴗ•́)و`,
+        owner:    `*😼* Está función solo puede ser usada por mi *creador.*\n> ✰ 𝒜𝒶𝓇𝑜𝓂 (•̀ᴗ•́)و`,
+        mods:     `*😼* Está función solo puede ser usada por mi *creador.*\n> ✰ 𝒜𝒶𝓇𝑜𝓂 (•̀ᴗ•́)و`,
+        premium:  `*😼* Está función solo puede ser usada por los *usuarios Premium.*`,
+        group:    `*😼* Está función encantada solo puede ser usada en reinos de poder *(grupos).*`,
+        private:  `*😼* Está función encantada solo puede ser ejecutada en mi casa *(chat privado).*`,
+        admin:    `*😼* Está función encantada solo puede ser ejecutada por las personas más importantes del reino *(grupo).*`,
+        botAdmin: `*😼* Está función encantada solo puede ser ejecutada si yo soy administradora de este reino *(grupo).*`,
+        register: `*😼* Está función encantada solo puede ser usada si estás *registrado.*\n> ✰ Usa *${prefix}reg nombre.edad*`,
+        banned:   `*😼* Estás *baneado/a*, no puedes usar comandos en este bot.`,
+        restrict: `*😼* Está función encantada fue desactivada por mi creador *(𝒜𝒶𝓇𝑜𝓂).*`,
+        limit:    `*😼* Está función encantada solo puede ser usada si tienes *límites disponibles.*\n> ✰ Los usuarios *Premium* tienen límites ilimitados.`,
+        modeOff:  `*😼* El bot está en *modo privado.*\n> ✰ Solo el creador puede usarme ahora.`,
+        modeAdmin:`*😼* El *modo admin* está activo.\n> ✰ Solo los administradores pueden usar comandos aquí.`,
+    }
 
-    banned:   () => `⚔️ Estás baneado. No tienes acceso a mis comandos.`,
-    owner:    () => `⚔️ Ese comando es exclusivo de mi creador.`,
-    rowner:   () => `⚔️ Solo el creador principal puede ejecutar eso.`,
-    premium:  () => `⚔️ Ese comando es para usuarios Premium.`,
-    group:    () => `⚔️ Ese comando solo funciona en grupos.`,
-    private:  () => `⚔️ Ese comando solo funciona en privado.`,
-    admin:    () => `⚔️ Necesitas ser administrador del grupo.`,
-    botAdmin: () => `⚔️ Necesito ser administradora del grupo para hacer eso.`,
-    register: (p) => `⚔️ Debes registrarte primero.\n> Usa: *${p}reg nombre.edad*`,
-    noLimit:  () => `⚔️ Sin límites disponibles. Los usuarios Premium tienen límites ilimitados.`,
-    modeOff:  () => `⚔️ El bot está en modo privado. Solo el owner puede usarlo.`,
-    modeAdmin:() => `⚔️ Modo admin activo. Solo administradores pueden usar comandos.`,
+    const text = msgs[type]
+    if (!text || !m) return
+
+    try {
+        const thumb = await global.getBannerBuffer()
+        const ctx   = global.getNewsletterCtx(thumb)
+        await conn.sendMessage(m.chat, {
+            text,
+            contextInfo: ctx
+        }, { quoted: m })
+    } catch {
+        m.reply(text).catch(() => {})
+    }
+
+    m.react('😼').catch(() => {})
 }
 
 // ── Handler principal ─────────────────────────────────────────────────────────
-
 export async function mainHandler(m, conn, loader) {
     try {
         if (!m?.body) return
         if (isDuplicate(m.id)) return
+        if (m.id?.startsWith('BAE5') && m.id.length === 16) return
+        if (m.id?.startsWith('NJX-')) return
 
-        const prefix = getPrefix(m.body)
-        if (!prefix) return
+        const prefix = (global.prefix || '#')
+        if (!m.body.startsWith(prefix)) return
 
         const body        = m.body.slice(prefix.length).trim()
         const parts       = body.split(/ +/)
@@ -112,7 +130,16 @@ export async function mainHandler(m, conn, loader) {
                 .sort((a, b) => b.score - a.score)
                 .slice(0, 3)
 
-            return m.reply(LUTE.notFound(prefix, commandName, similar))
+            const sugs = similar.length
+                ? similar.map(s => `> ✦ *${prefix}${s.cmd}* — ${s.score}%`).join('\n')
+                : '> ✦ Sin sugerencias.'
+
+            return m.reply(
+                `*⚔️ COMANDO INVÁLIDO*\n` +
+                `> *(${prefix}${commandName})* no está en mi registro.\n` +
+                `> Usa *${prefix}menu* para ver los disponibles.\n\n` +
+                `*Similares:*\n${sugs}`
+            )
         }
 
         // ── Permisos ──────────────────────────────────────────────────────
@@ -121,10 +148,8 @@ export async function mainHandler(m, conn, loader) {
         const isPremium  = isOwner  || isPremiumJid(m.sender)
         const isGroup    = m.isGroup
 
-        // Modo privado global
-        if (global.botOff && !isOwner) return m.reply(LUTE.modeOff())
+        if (global.botOff && !isOwner) return global.dfail('modeOff',  m, conn, prefix)
 
-        // Init DB
         const user  = database.getUser(m.sender)
         const group = isGroup ? database.getGroup(m.chat) : null
 
@@ -133,18 +158,15 @@ export async function mainHandler(m, conn, loader) {
 
         const isRegistered = isOwner || !!user.registered
 
-        // Modo admin del grupo
         let isAdmin    = false
         let isBotAdmin = false
 
         if (isGroup && (cmd.admin || cmd.botAdmin || group?.modoadmin)) {
             const meta = await getGroupMeta(conn, m.chat)
             if (meta) {
-                const clean  = v => (v || '').split('@')[0].split(':')[0]
-                const sNum   = clean(m.sender)
-                const botNum = clean(conn.user.id)
-                const sP     = meta.participants.find(p => clean(p.jid || p.id) === sNum)
-                const bP     = meta.participants.find(p => clean(p.jid || p.id) === botNum)
+                const clean = v => (v || '').split('@')[0].split(':')[0]
+                const sP    = meta.participants.find(p => clean(p.jid || p.id) === clean(m.sender))
+                const bP    = meta.participants.find(p => clean(p.jid || p.id) === clean(conn.user.id))
                 isAdmin    = !!sP?.admin || isOwner
                 isBotAdmin = !!bP?.admin
             }
@@ -152,68 +174,87 @@ export async function mainHandler(m, conn, loader) {
             isAdmin = isOwner
         }
 
-        if (isGroup && group?.modoadmin && !isAdmin && !isOwner) return m.reply(LUTE.modeAdmin())
-        if (user.banned && !isOwner)   return m.reply(LUTE.banned())
-        if (cmd.rowner  && !isROwner)  return m.reply(LUTE.rowner())
-        if (cmd.owner   && !isOwner)   return m.reply(LUTE.owner())
-        if (cmd.premium && !isPremium) return m.reply(LUTE.premium())
-        if (cmd.register && !isRegistered) return m.reply(LUTE.register(prefix))
-        if (cmd.group   && !isGroup)   return m.reply(LUTE.group())
-        if (cmd.private && isGroup)    return m.reply(LUTE.private())
-        if (cmd.admin   && !isAdmin)   return m.reply(LUTE.admin())
-        if (cmd.botAdmin && !isBotAdmin) return m.reply(LUTE.botAdmin())
+        if (isGroup && group?.modoadmin && !isAdmin && !isOwner) return global.dfail('modeAdmin', m, conn, prefix)
+        if (user.banned && !isOwner)    return global.dfail('banned',   m, conn, prefix)
+        if (cmd.rowner  && !isROwner)   return global.dfail('rowner',   m, conn, prefix)
+        if (cmd.owner   && !isOwner)    return global.dfail('owner',    m, conn, prefix)
+        if (cmd.premium && !isPremium)  return global.dfail('premium',  m, conn, prefix)
+        if (cmd.register && !isRegistered) return global.dfail('register', m, conn, prefix)
+        if (cmd.group   && !isGroup)    return global.dfail('group',    m, conn, prefix)
+        if (cmd.private && isGroup)     return global.dfail('private',  m, conn, prefix)
+        if (cmd.admin   && !isAdmin)    return global.dfail('admin',    m, conn, prefix)
+        if (cmd.botAdmin && !isBotAdmin) return global.dfail('botAdmin', m, conn, prefix)
 
         if (cmd.limit && !isPremium) {
-            if ((user.limit || 0) < 1) return m.reply(LUTE.noLimit())
+            if ((user.limit || 0) < 1) return global.dfail('limit',    m, conn, prefix)
             user.limit -= 1
         }
 
+        m.exp = (m.exp || 0) + (cmd.exp ? parseInt(cmd.exp) : Math.ceil(Math.random() * 10))
+
         database.save().catch(() => {})
 
-        // ── Resolver @mentioned ───────────────────────────────────────────
         let who = null
-        if (m.mentionedJid?.length) {
-            who = m.mentionedJid[0]
-        } else if (m.quoted?.sender) {
-            who = m.quoted.sender
-        } else if (args[0] && /^\d+$/.test(args[0])) {
-            who = args[0] + '@s.whatsapp.net'
+        if (m.mentionedJid?.length)   who = m.mentionedJid[0]
+        else if (m.quoted?.sender)     who = m.quoted.sender
+        else if (args[0] && /^\d{5,}$/.test(args[0])) who = args[0] + '@s.whatsapp.net'
+
+        const fn = typeof cmd === 'function' ? cmd : (cmd.default || cmd.handler)
+        if (typeof fn !== 'function') return
+
+        try {
+            await fn(m, {
+                conn,
+                args,
+                text,
+                prefix,
+                usedPrefix:   prefix,
+                command:      commandName,
+                who,
+                isOwner,
+                isROwner,
+                isPremium,
+                isRegistered,
+                isGroup,
+                isAdmin,
+                isBotAdmin,
+                user,
+                group,
+                db:           database.data,
+            })
+        } catch (e) {
+            const stack = e?.stack?.split('\n') || []
+            let file = 'desconocido', line = '?'
+            for (const l of stack) {
+                const match = l.match(/\((.*cmds.*):(\d+):\d+\)/)
+                if (match) { file = match[1]; line = match[2]; break }
+            }
+
+            const errMsg =
+                `*⚔️ ERROR*\n\n` +
+                `> *Comando:* ${prefix}${commandName}\n` +
+                `> *Error:* ${e?.message?.slice(0, 300)}\n` +
+                `> *Archivo:* ${file}\n` +
+                `> *Línea:* ${line}`
+
+            console.error(chalk.red(errMsg))
+            m.reply(errMsg).catch(() => {})
+            m.react('⚔️').catch(() => {})
         }
 
-        // ── Ejecutar ──────────────────────────────────────────────────────
-        const fn = typeof cmd === 'function' ? cmd : (cmd.default || cmd.handler)
-        if (typeof fn !== 'function') throw new Error('cmd is not a function')
-        await fn(m, {
-            conn,
-            args,
-            text,
-            prefix,
-            usedPrefix: prefix,
-            command:    commandName,
-            who,
-            isOwner, isROwner, isPremium,
-            isRegistered, isGroup,
-            isAdmin, isBotAdmin,
-            user,
-            group,
-            db: database.data,
-        })
+        // XP al usuario
+        try { database.data.users[m.sender].exp += m.exp } catch {}
+        database.save().catch(() => {})
 
     } catch (e) {
-        const stack = e?.stack?.split('\n') || []
-        let file = 'desconocido', line = '?'
-        for (const l of stack) {
-            const match = l.match(/\((.*cmds.*):(\d+):\d+\)/)
-            if (match) { file = match[1]; line = match[2]; break }
-        }
-
-        const errMsg =
-            `⚔️ *ERROR*\n\n` +
-            `> Comando: ${m.body?.slice(0, 50)}\n` +
-            `> ${e?.message?.slice(0, 300)}\n` +
-            `> ${file}:${line}`
-
-        console.error(chalk.red(errMsg))
-        m.reply(errMsg).catch(() => {})
+        console.error(chalk.red('[HANDLER]'), e.message)
+        m?.reply(`*⚔️ ERROR GLOBAL*\n> ${e?.message?.slice(0, 400)}`).catch(() => {})
     }
 }
+
+// ── Hot reload ────────────────────────────────────────────────────────────────
+watchFile(scriptPath, () => {
+    unwatchFile(scriptPath)
+    console.log(chalk.hex('#d4af37')('  ⚔  ') + chalk.yellow('main.js actualizado'))
+    import(`${scriptPath}?t=${Date.now()}`).catch(() => {})
+})
