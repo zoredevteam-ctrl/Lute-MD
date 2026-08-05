@@ -28,26 +28,36 @@ const cmdsDir   = path.join(__dirname, 'cmds')
 
 global.conns = []
 
-const W = chalk.hex('#ffffff')
-const G = chalk.hex('#d4af37')
-const R = chalk.hex('#8b0000')
-const D = chalk.hex('#1a1a1a')
+const W  = chalk.hex('#ffffff')
+const G  = chalk.hex('#d4af37')
+const G2 = chalk.hex('#b8960c')
+const S  = chalk.hex('#c0c0c0')
+const R  = chalk.hex('#8b0000')
 
 const log = {
-    info:    m => console.log(G('  ⚔  ') + chalk.white(m)),
+    info:    m => console.log(G('  ✦  ') + chalk.white(m)),
     success: m => console.log(G('  ✦  ') + chalk.greenBright(m)),
     warn:    m => console.log(G('  ▲  ') + chalk.yellow(m)),
     error:   m => console.log(G('  ✖  ') + chalk.redBright(m)),
 }
 
 const BANNER = `
-${G('  ╔════════════════════════════════════════════╗')}
-${G('  ║')}                                            ${G('║')}
-${G('  ║')}    ${W.bold('⚔  L U T E  ·  M D  ⚔')}               ${G('║')}
-${G('  ║')}    ${chalk.gray('Exterminadora · Hazbin Hotel')}           ${G('║')}
-${G('  ║')}    ${chalk.gray('ZoreDevTeam · v' + global.botVersion)}                  ${G('║')}
-${G('  ║')}                                            ${G('║')}
-${G('  ╚════════════════════════════════════════════╝')}
+${G('  ╔══════════════════════════════════════════════════╗')}
+${G('  ║')}                                                  ${G('║')}
+${G('  ║')}  ${W('⠀⠀⠀⠀⠀⢀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀')}              ${G('║')}
+${G('  ║')}  ${W('⠀⠀⠀⣠⣾⣿⣿⣷⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀')}              ${G('║')}
+${G('  ║')}  ${W('⠀⢀⣾⣿⡿⠋⠙⢿⣿⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀')}              ${G('║')}
+${G('  ║')}  ${W('⠀⣾⣿⠋⠀⠀⠀⠀⠙⣿⣷⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀')}              ${G('║')}
+${G('  ║')}  ${W('⢸⣿⡇⠀⠀⠀⠀⠀⠀⢸⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀')}              ${G('║')}
+${G('  ║')}  ${W('⠀⢿⣿⣄⠀⠀⠀⠀⣠⣿⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀')}              ${G('║')}
+${G('  ║')}  ${W('⠀⠀⠙⢿⣿⣿⣿⣿⡿⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀')}              ${G('║')}
+${G('  ║')}                                                  ${G('║')}
+${G('  ║')}        ' + G2.bold('L  U  T  E  ·  M  D') + '                    ' + G('║')}
+${G('  ║')}        ' + S('𝒟𝑒𝓋𝑒𝓁𝑜𝓅𝑒𝒹 𝒷𝓎 𝒜𝒶𝓇𝑜𝓂') + '                  ' + G('║')}
+${G('  ║')}        ' + chalk.gray('Exterminadora · Hazbin Hotel') + '            ' + G('║')}
+${G('  ║')}        ' + chalk.gray('ZoreDevTeam · v' + global.botVersion) + '                      ' + G('║')}
+${G('  ║')}                                                  ${G('║')}
+${G('  ╚══════════════════════════════════════════════════╝')}
 `
 
 const loader = new CmdsLoader(cmdsDir, log)
@@ -97,7 +107,7 @@ else if (useCode) opcion = '2'
 else if (!fs.existsSync(credsPath)) {
     console.log(BANNER)
     opcion = readlineSync.question(
-        G('\n  ⚔  ') + chalk.white('Selecciona método de conexión:\n') +
+        G('\n  ✦  ') + chalk.white('Selecciona método de conexión:\n') +
         G('     1. ') + chalk.white('Código QR\n') +
         G('     2. ') + chalk.white('Código de 8 dígitos\n') +
         G('  →  ')
@@ -108,7 +118,7 @@ else if (!fs.existsSync(credsPath)) {
     }
     if (opcion === '2') {
         console.log('\n' + chalk.gray('  Número de WhatsApp (ej: +573001234567)\n'))
-        phoneNumber = normalizePhone(readlineSync.question(G('  ⚔  ')))
+        phoneNumber = normalizePhone(readlineSync.question(G('  ✦  ')))
     }
 }
 
@@ -152,11 +162,11 @@ async function startBot() {
                     const raw  = await conn.requestPairingCode(phoneNumber)
                     const code = raw?.match(/.{1,4}/g)?.join('-') || raw
                     console.log(
-                        G('\n  ╔══════════════════════╗\n') +
-                        G('  ║  ') + W.bold('CÓDIGO DE EMPAREJAMIENTO') + G('  ║\n') +
-                        G('  ╠══════════════════════╣\n') +
-                        G('  ║  ') + chalk.yellowBright.bold(code) + G('         ║\n') +
-                        G('  ╚══════════════════════╝\n')
+                        G('\n  ╔══════════════════════════╗\n') +
+                        G('  ║  ') + W.bold('  CÓDIGO DE EMPAREJAMIENTO  ') + G('║\n') +
+                        G('  ╠══════════════════════════╣\n') +
+                        G('  ║       ') + chalk.yellowBright.bold(code) + G('        ║\n') +
+                        G('  ╚══════════════════════════╝\n')
                     )
                 }
             } catch (e) { log.error(`Pairing: ${e.message}`) }
@@ -165,14 +175,14 @@ async function startBot() {
 
     conn.ev.on('connection.update', async ({ qr, connection, lastDisconnect }) => {
         if (qr && opcion === '1') {
-            console.log(G('\n  ⚔  Escanea el código QR:\n'))
+            console.log(G('\n  ✦  Escanea el código QR:\n'))
             qrcode.generate(qr, { small: true })
         }
 
         if (connection === 'open') {
             console.log(BANNER)
             log.success(`Conectada como: ${chalk.yellowBright(conn.user?.name || 'Lute')}`)
-            log.info(`Comandos cargados: ${chalk.yellowBright(loader.getAll().size)}`)
+            log.info(`Comandos: ${chalk.yellowBright(loader.getAll().size)}`)
             await loadEventFiles(conn)
         }
 
@@ -218,7 +228,7 @@ async function startBot() {
 }
 
 ;(async () => {
-    console.log(G('\n  ⚔  Iniciando Lute MD...\n'))
+    console.log(G('\n  ✦  Iniciando Lute MD...\n'))
     await database.read()
     log.success('Base de datos lista.')
     await loader.loadAll()
