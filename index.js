@@ -1,5 +1,6 @@
 import './settings.js'
 import chalk from 'chalk'
+import cfonts from 'cfonts'
 import pino from 'pino'
 import qrcode from 'qrcode-terminal'
 import fs from 'fs'
@@ -22,17 +23,17 @@ import { serialize } from './core/serialize.js'
 import { database } from './core/database.js'
 import { CmdsLoader } from './core/system/cmdsLoader.js'
 import { mainHandler } from './main.js'
+import printLog from './core/print.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const cmdsDir   = path.join(__dirname, 'cmds')
 
 global.conns = []
 
-const W  = chalk.hex('#ffffff')
 const G  = chalk.hex('#d4af37')
 const G2 = chalk.hex('#b8960c')
+const W  = chalk.white
 const S  = chalk.hex('#c0c0c0')
-const R  = chalk.hex('#8b0000')
 
 const log = {
     info:    m => console.log(G('  ✦  ') + chalk.white(m)),
@@ -41,26 +42,19 @@ const log = {
     error:   m => console.log(G('  ✖  ') + chalk.redBright(m)),
 }
 
-const BANNER = `
-${G('  ╔══════════════════════════════════════════════════╗')}
-${G('  ║')}                                                  ${G('║')}
-${G('  ║')}  ${W('⠀⠀⠀⠀⠀⢀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀')}              ${G('║')}
-${G('  ║')}  ${W('⠀⠀⠀⣠⣾⣿⣿⣷⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀')}              ${G('║')}
-${G('  ║')}  ${W('⠀⢀⣾⣿⡿⠋⠙⢿⣿⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀')}              ${G('║')}
-${G('  ║')}  ${W('⠀⣾⣿⠋⠀⠀⠀⠀⠙⣿⣷⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀')}              ${G('║')}
-${G('  ║')}  ${W('⢸⣿⡇⠀⠀⠀⠀⠀⠀⢸⣿⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀')}              ${G('║')}
-${G('  ║')}  ${W('⠀⢿⣿⣄⠀⠀⠀⠀⣠⣿⡿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀')}              ${G('║')}
-${G('  ║')}  ${W('⠀⠀⠙⢿⣿⣿⣿⣿⡿⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀')}              ${G('║')}
-${G('  ║')}                                                  ${G('║')}
-${G('  ║')}        ' + G2.bold('L  U  T  E  ·  M  D') + '                    ' + G('║')}
-${G('  ║')}        ' + S('𝒟𝑒𝓋𝑒𝓁𝑜𝓅𝑒𝒹 𝒷𝓎 𝒜𝒶𝓇𝑜𝓂') + '                  ' + G('║')}
-${G('  ║')}        ' + chalk.gray('Exterminadora · Hazbin Hotel') + '            ' + G('║')}
-${G('  ║')}        ' + chalk.gray('ZoreDevTeam · v' + global.botVersion) + '                      ' + G('║')}
-${G('  ║')}                                                  ${G('║')}
-${G('  ╚══════════════════════════════════════════════════╝')}
-`
+function showBanner() {
+    console.clear()
+    cfonts.say('LUTE BOT', {
+        font:       'block',
+        align:      'left',
+        gradient:   ['#d4af37', '#8b0000'],
+        lineHeight: 1,
+        space:      false,
+    })
+    console.log(S('  𝒟𝑒𝓋𝑒𝓁𝑜𝓅𝑒𝒹 𝒷𝓎 𝒜𝒶𝓇𝑜𝓂') + '\n')
+}
 
-const loader = new CmdsLoader(cmdsDir, log)
+const loader      = new CmdsLoader(cmdsDir, log)
 const loadedEvents = new Set()
 
 async function loadEventFiles(conn) {
@@ -102,14 +96,15 @@ function normalizePhone(raw) {
 let opcion = '', phoneNumber = ''
 const credsPath = path.join(global.sessionName || './sessions/owner', 'creds.json')
 
+showBanner()
+
 if (useQR)        opcion = '1'
 else if (useCode) opcion = '2'
 else if (!fs.existsSync(credsPath)) {
-    console.log(BANNER)
     opcion = readlineSync.question(
-        G('\n  ✦  ') + chalk.white('Selecciona método de conexión:\n') +
-        G('     1. ') + chalk.white('Código QR\n') +
-        G('     2. ') + chalk.white('Código de 8 dígitos\n') +
+        G('  ✦  ') + W('Selecciona método de conexión:\n') +
+        G('     1. ') + W('Código QR\n') +
+        G('     2. ') + W('Código de 8 dígitos\n') +
         G('  →  ')
     )
     while (!/^[1-2]$/.test(opcion)) {
@@ -117,7 +112,7 @@ else if (!fs.existsSync(credsPath)) {
         opcion = readlineSync.question(G('  →  '))
     }
     if (opcion === '2') {
-        console.log('\n' + chalk.gray('  Número de WhatsApp (ej: +573001234567)\n'))
+        console.log('\n' + S('  Número de WhatsApp (ej: +573001234567)\n'))
         phoneNumber = normalizePhone(readlineSync.question(G('  ✦  ')))
     }
 }
@@ -163,9 +158,9 @@ async function startBot() {
                     const code = raw?.match(/.{1,4}/g)?.join('-') || raw
                     console.log(
                         G('\n  ╔══════════════════════════╗\n') +
-                        G('  ║  ') + W.bold('  CÓDIGO DE EMPAREJAMIENTO  ') + G('║\n') +
+                        G('  ║    ') + W.bold('CÓDIGO DE VINCULACIÓN') + G('    ║\n') +
                         G('  ╠══════════════════════════╣\n') +
-                        G('  ║       ') + chalk.yellowBright.bold(code) + G('        ║\n') +
+                        G('  ║        ') + chalk.yellowBright.bold(code) + G('         ║\n') +
                         G('  ╚══════════════════════════╝\n')
                     )
                 }
@@ -180,9 +175,11 @@ async function startBot() {
         }
 
         if (connection === 'open') {
-            console.log(BANNER)
+            showBanner()
             log.success(`Conectada como: ${chalk.yellowBright(conn.user?.name || 'Lute')}`)
             log.info(`Comandos: ${chalk.yellowBright(loader.getAll().size)}`)
+            log.info(`Versión:  ${chalk.yellowBright(global.botVersion)}`)
+            console.log('')
             await loadEventFiles(conn)
         }
 
@@ -222,13 +219,13 @@ async function startBot() {
             if (m.key?.remoteJid === 'status@broadcast') return
             if (m.key?.id?.startsWith('BAE5') && m.key.id.length === 16) return
             m = serialize(conn, m)
+            await printLog(m, conn)
             await mainHandler(m, conn, loader)
         } catch (e) { log.error(`msg: ${e.message}`) }
     })
 }
 
 ;(async () => {
-    console.log(G('\n  ✦  Iniciando Lute MD...\n'))
     await database.read()
     log.success('Base de datos lista.')
     await loader.loadAll()
