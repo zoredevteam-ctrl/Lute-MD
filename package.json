@@ -26,6 +26,7 @@
     "readline-sync": "^1.4.10",
     "sharp": "^0.33.4",
     "uuid": "^10.0.0",
-    "yt-search": "^2.12.1"
+    "yt-search": "^2.12.1",
+    "cfonts": "^3.3.0"
   }
 }
