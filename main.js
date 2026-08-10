@@ -1,8 +1,9 @@
 import './settings.js'
 import chalk from 'chalk'
-import { watchFile, unwatchFile } from 'fs'
+import { watchFile, unwatchFile, fileURLToPath as _ftu } from 'fs'
 import { fileURLToPath } from 'url'
 import { database } from './core/database.js'
+import { buildCtx } from './core/system/context.js'
 
 const scriptPath = fileURLToPath(import.meta.url)
 
@@ -70,25 +71,24 @@ global.dfail = async (type, m, conn, prefix = '#') => {
         rowner:   `*😼* Está función solo puede ser usada por mi *creador.*\n> ✰ 𝒜𝒶𝓇𝑜𝓂 (•̀ᴗ•́)و`,
         owner:    `*😼* Está función solo puede ser usada por mi *creador.*\n> ✰ 𝒜𝒶𝓇𝑜𝓂 (•̀ᴗ•́)و`,
         mods:     `*😼* Está función solo puede ser usada por mi *creador.*\n> ✰ 𝒜𝒶𝓇𝑜𝓂 (•̀ᴗ•́)و`,
-        premium:  `*😼* Está función solo puede ser usada por los *usuarios Premium.*`,
-        group:    `*😼* Está función encantada solo puede ser usada en reinos de poder *(grupos).*`,
-        private:  `*😼* Está función encantada solo puede ser ejecutada en mi casa *(chat privado).*`,
-        admin:    `*😼* Está función encantada solo puede ser ejecutada por las personas más importantes del reino *(grupo).*`,
-        botAdmin: `*😼* Está función encantada solo puede ser ejecutada si yo soy administradora de este reino *(grupo).*`,
-        register: `*😼* Está función encantada solo puede ser usada si estás *registrado.*\n> ✰ Usa *${prefix}reg nombre.edad*`,
-        banned:   `*😼* Estás *baneado/a*, no puedes usar comandos en este bot.`,
-        restrict: `*😼* Está función encantada fue desactivada por mi creador *(𝒜𝒶𝓇𝑜𝓂).*`,
-        limit:    `*😼* Está función encantada solo puede ser usada si tienes *límites disponibles.*\n> ✰ Los usuarios *Premium* tienen límites ilimitados.`,
-        modeOff:  `*😼* El bot está en *modo privado.*\n> ✰ Solo el creador puede usarme ahora.`,
-        modeAdmin:`*😼* El *modo admin* está activo.\n> ✰ Solo los administradores pueden usar comandos aquí.`,
+        premium:  `*👑* Está función solo puede ser usada por los *usuarios Premium.*`,
+        group:    `*👑* Está función encantada solo puede ser usada en reinos de poder *(grupos).*`,
+        private:  `*👑* Está función encantada solo puede ser ejecutada en mi casa *(chat privado).*`,
+        admin:    `*👑* Está función encantada solo puede ser ejecutada por las personas más importantes del reino *(grupo).*`,
+        botAdmin: `*👑* Está función encantada solo puede ser ejecutada si yo soy administradora de este reino *(grupo).*`,
+        register: `*👑* Está función encantada solo puede ser usada si estás *registrado.*\n> ✰ Usa *${prefix}reg nombre.edad*`,
+        banned:   `*👑* Estás *baneado/a*, no puedes usar comandos en este bot.`,
+        restrict: `*👑* Está función encantada fue desactivada por mi creador *(𝒜𝒶𝓇𝑜𝓂).*`,
+        limit:    `*👑* Está función encantada solo puede ser usada si tienes *límites disponibles.*\n> ✰ Los usuarios *Premium* tienen límites ilimitados.`,
+        modeOff:  `*👑* El bot está en *modo privado.*\n> ✰ Solo el creador puede usarme ahora.`,
+        modeAdmin:`*👑* El *modo admin* está activo.\n> ✰ Solo los administradores pueden usar comandos aquí.`,
     }
 
     const text = msgs[type]
     if (!text || !m) return
 
     try {
-        const thumb = await global.getBannerBuffer()
-        const ctx   = global.getNewsletterCtx(thumb)
+        const ctx = await buildCtx()
         await conn.sendMessage(m.chat, {
             text,
             contextInfo: ctx
@@ -97,7 +97,7 @@ global.dfail = async (type, m, conn, prefix = '#') => {
         m.reply(text).catch(() => {})
     }
 
-    m.react('😼').catch(() => {})
+    m.react('✖️').catch(() => {})
 }
 
 // ── Handler principal ─────────────────────────────────────────────────────────
@@ -239,7 +239,7 @@ export async function mainHandler(m, conn, loader) {
 
             console.error(chalk.red(errMsg))
             m.reply(errMsg).catch(() => {})
-            m.react('⚔️').catch(() => {})
+            m.react('✖️').catch(() => {})
         }
 
         // XP al usuario
