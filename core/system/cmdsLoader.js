@@ -1,3 +1,4 @@
+
 import { readdirSync, watch, existsSync } from 'fs'
 import { join } from 'path'
 import { pathToFileURL } from 'url'
@@ -6,43 +7,38 @@ export class CmdsLoader {
     constructor(cmdsDir, log) {
         this.cmdsDir  = cmdsDir
         this.log      = log
-        this.commands = new Map() // name → handler
+        this.commands = new Map()
+        this._cache   = new Map() // filePath → timestamp cargado
     }
 
     async loadAll() {
         const files = this._getFiles(this.cmdsDir)
-        for (const file of files) {
-            await this._load(file)
-        }
+        await Promise.all(files.map(f => this._load(f)))
         this.log.success(`${this.commands.size} comandos cargados`)
     }
 
     watch() {
-        // Vigilar cambios recursivos en cmds/
         const watchDir = (dir) => {
             watch(dir, { recursive: false }, async (event, filename) => {
                 if (!filename?.endsWith('.js')) return
                 const full = join(dir, filename)
                 if (existsSync(full)) {
                     await this._load(full)
-                    this.log.success(`Comando recargado: ${filename}`)
+                    this.log.success(`Recargado: ${filename}`)
                 } else {
-                    // Eliminar comandos del archivo borrado
                     for (const [name, cmd] of this.commands) {
                         if (cmd.__file === full) this.commands.delete(name)
                     }
-                    this.log.warn(`Comando eliminado: ${filename}`)
+                    this._cache.delete(full)
+                    this.log.warn(`Eliminado: ${filename}`)
                 }
             })
-
-            // Sub-carpetas
             try {
                 for (const entry of readdirSync(dir, { withFileTypes: true })) {
                     if (entry.isDirectory()) watchDir(join(dir, entry.name))
                 }
             } catch {}
         }
-
         watchDir(this.cmdsDir)
     }
 
@@ -53,8 +49,6 @@ export class CmdsLoader {
     getAll() {
         return this.commands
     }
-
-    // ── Privados ──────────────────────────────────────────────────────────────
 
     _getFiles(dir) {
         const results = []
@@ -78,23 +72,28 @@ export class CmdsLoader {
             for (const cmd of cmds) {
                 if (!cmd) continue
                 const key = String(cmd).toLowerCase()
-                const fn = mod.default || mod
-            fn.__file = filePath
-            fn.command = mod.command
-            fn.tags    = mod.tags
-            fn.owner   = mod.owner
-            fn.rowner  = mod.rowner
-            fn.premium = mod.premium
-            fn.group   = mod.group
-            fn.admin   = mod.admin
-            fn.botAdmin= mod.botAdmin
-            fn.private = mod.private
-            fn.register= mod.register
-            fn.limit   = mod.limit
-            this.commands.set(key, fn)
+                const fn  = typeof mod === 'function' ? mod : mod
+
+                fn.__file   = filePath
+                fn.command  = mod.command
+                fn.tags     = mod.tags
+                fn.owner    = mod.owner
+                fn.rowner   = mod.rowner
+                fn.premium  = mod.premium
+                fn.group    = mod.group
+                fn.admin    = mod.admin
+                fn.botAdmin = mod.botAdmin
+                fn.private  = mod.private
+                fn.register = mod.register
+                fn.limit    = mod.limit
+                fn.exp      = mod.exp
+
+                this.commands.set(key, fn)
             }
+
+            this._cache.set(filePath, Date.now())
         } catch (e) {
-            this.log.error(`Error cargando ${filePath}: ${e.message}`)
+            this.log.error(`Error cargando ${filePath.split('/').pop()}: ${e.message}`)
         }
     }
 }
