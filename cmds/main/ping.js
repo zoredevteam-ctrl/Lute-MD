@@ -1,33 +1,22 @@
 import { buildCtx } from '../../core/system/context.js'
 
 const handler = async (m, { conn }) => {
-    const start = Date.now()
     const ctx   = await buildCtx()
+    const start = Date.now()
 
     const sent = await conn.sendMessage(m.chat, {
-        text: '⚔️ Calculando...',
+        text: '𝘊𝘢𝘭𝘤𝘶𝘭𝘢𝘯𝘥𝘰...',
         contextInfo: ctx
     }, { quoted: m })
 
     const ms = Date.now() - start
-    const estado = ms < 300 ? '🟢 Óptimo' : ms < 700 ? '🟡 Regular' : '🔴 Lento'
-
-    const sec = process.uptime()
-    const h   = Math.floor(sec / 3600)
-    const min = Math.floor((sec % 3600) / 60)
-    const s   = Math.floor(sec % 60)
 
     await conn.sendMessage(m.chat, {
-        text:
-            `⚔️ *LUTE · SISTEMA*\n` +
-            `> ✦ Ping: *${ms}ms*\n` +
-            `> ✦ Estado: ${estado}\n` +
-            `> ✦ Uptime: *${h}h ${min}m ${s}s*\n` +
-            `> ✦ Node: *${process.version}*`,
-        contextInfo: ctx
-    }, { quoted: m })
+        text: `🏓 *${ms}ms*`,
+        edit: sent.key
+    })
 }
 
-handler.command = ['ping', 'p', 'speed']
+handler.command = ['ping', 'p']
 handler.tags    = ['main']
 export default handler
