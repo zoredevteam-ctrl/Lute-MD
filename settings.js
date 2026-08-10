@@ -7,7 +7,7 @@ const scriptPath = fileURLToPath(import.meta.url)
 
 // ─── OWNERS ──────────────────────────────────────────────────────────────────
 global.owner = [
-    ['573107400303', 'Aarom', true],
+    ['573107400303', 'Arom', true],
 ]
 global.mods   = []
 global.prems  = []
@@ -42,7 +42,7 @@ global.emoji2  = '🩸'
 global.emoji3  = '🏹'
 
 // ─── MEDIA ────────────────────────────────────────────────────────────────────
-global.icon      = 'https://files.catbox.moe/htexy6.jpeg'
+global.icon      = 'https://i.pinimg.com/736x/30/7e/3f/307e3f2df6f4a735f659c6f28a4fc399.jpg'
 global.banner    = 'https://i.pinimg.com/736x/30/7e/3f/307e3f2df6f4a735f659c6f28a4fc399.jpg'
 global.bannerUrl = global.banner
 global.avatar    = global.icon
@@ -82,6 +82,10 @@ global.opts   = { autoread: true, queque: false }
 // ─── FUNCIONES GLOBALES ───────────────────────────────────────────────────────
 
 // Obtiene el banner como Buffer (URL o base64)
+let _bannerCache   = null
+let _bannerUrl     = null
+let _bannerExpires = 0
+
 global.getBannerBuffer = async () => {
     try {
         const src = global.banner
@@ -89,9 +93,16 @@ global.getBannerBuffer = async () => {
         if (src.startsWith('data:image')) {
             return Buffer.from(src.split(',')[1], 'base64')
         }
-        const res = await fetch(src)
-        return Buffer.from(await res.arrayBuffer())
-    } catch { return null }
+        if (_bannerCache && _bannerUrl === src && Date.now() < _bannerExpires) {
+            return _bannerCache
+        }
+        const res  = await fetch(src)
+        const buf  = Buffer.from(await res.arrayBuffer())
+        _bannerCache   = buf
+        _bannerUrl     = src
+        _bannerExpires = Date.now() + 10 * 60 * 1000
+        return buf
+    } catch { return _bannerCache || null }
 }
 
 // Genera el contextInfo con newsletter
