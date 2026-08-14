@@ -1,39 +1,32 @@
-export default {
-    name: 'misenlace',
-    alias: ['enlaces', 'links'],
-    description: 'Envía un mensaje interactivo con botones de enlace',
-    category: 'utilidad',
+const OPTIONS = [
+    { id: 'btn_inf', text: 'ℹ️ Información' },
+    { id: 'btn_help', text: '❓ Ayuda' },
+    { id: 'btn_ping', text: '⚡ Estado' }
+]
 
-    async run(m, { conn }) {
-        try {
-            const bodyText = `Hola *@${m.sender.split('@')[0]}*\n\n` +
-                             `Haz clic en el botón de abajo para ver la información.`
+const handler = async (m, { conn, who }) => {
+    const target = who || m.sender
+    const num    = target.split('@')[0]
 
-            await conn.sendMessage(
-                m.chat,
-                {
-                    text: bodyText,
-                    mentions: [m.sender],
-                    footer: 'Lute Bot • Sistema de Botones',
-                    buttons: [
-                        {
-                            buttonId: 'btn_action_1',
-                            buttonText: { displayText: '🌐 Visitar Sitio Web' },
-                            type: 1
-                        },
-                        {
-                            buttonId: 'btn_action_2',
-                            buttonText: { displayText: '📋 Menú Principal' },
-                            type: 1
-                        }
-                    ],
-                    headerType: 1
-                },
-                { quoted: m }
-            )
-        } catch (e) {
-            console.error(`Error en botón: ${e.message}`)
-            await conn.sendMessage(m.chat, { text: '✖ Ocurrió un error al enviar los botones.' }, { quoted: m })
-        }
-    }
-      }
+    await m.react('🔘')
+
+    const headerText = `🤖 *MENÚ INTERACTIVO*\n> Hola @${num}, selecciona una opción para continuar:`
+
+    const buttons = OPTIONS.map(opt => ({
+        buttonId: opt.id,
+        buttonText: { displayText: opt.text },
+        type: 1
+    }))
+
+    await conn.sendMessage(m.chat, {
+        text: headerText,
+        footer: `Lute Bot • Sistema de Botones`,
+        buttons: buttons,
+        headerType: 1,
+        mentions: [target]
+    }, { quoted: m })
+}
+
+handler.command = ['boton', 'botones', 'menuopt']
+handler.tags    = ['main']
+export default handler
