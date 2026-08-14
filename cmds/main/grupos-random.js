@@ -1,5 +1,3 @@
-import { buildCtx } from '../../core/system/context.js'
-
 const RESPUESTAS = [
     { max: 5,  msg: (n, cm) => `😂 *${cm} cm* @${n}...\n> Para qué tener algo así si de todas formas nadie lo va a usar. Siguiente.` },
     { max: 8,  msg: (n, cm) => `💀 *${cm} cm* @${n}.\n> Eso es un error de la naturaleza. Mis condolencias.` },
@@ -16,28 +14,24 @@ const handler = async (m, { conn, who }) => {
     const target = who || m.sender
     const num    = target.split('@')[0]
 
-    // Seed basado en los últimos 4 dígitos — resultado SIEMPRE entre 2 y 30
     const seed = parseInt(num.replace(/\D/g, '').slice(-4)) || 1234
-    const cm   = (seed % 29) + 2  // rango: 2 a 30
+    const cm   = (seed % 29) + 2
 
     const respuesta = RESPUESTAS.find(r => cm <= r.max)
     const texto     = respuesta.msg(num, cm)
-    const ctx       = await buildCtx()
 
     await m.react('📏')
 
     await conn.sendMessage(m.chat, {
-        text:        `📏 *MEDIDOR DE BANANO*\n> Midiendo a @${num}...\n> ▓▓▓▓▓▓▓▓▓▓ 100%`,
-        mentions:    [target],
-        contextInfo: ctx
+        text:     `📏 *MEDIDOR DE BANANO*\n> Midiendo a @${num}...\n> ▓▓▓▓▓▓▓▓▓▓ 100%`,
+        mentions: [target]
     }, { quoted: m })
 
     await new Promise(r => setTimeout(r, 1500))
 
     await conn.sendMessage(m.chat, {
-        text:        texto,
-        mentions:    [target],
-        contextInfo: ctx
+        text:     texto,
+        mentions: [target]
     })
 }
 
