@@ -24,7 +24,7 @@ async function getBackground() {
         return readFileSync(MAKIMA_PATH)
     }
     try {
-        const res = await fetch(global.icon)
+        const res = await fetch(global.icon, { signal: AbortSignal.timeout(10000) })
         return Buffer.from(await res.arrayBuffer())
     } catch {
         return null

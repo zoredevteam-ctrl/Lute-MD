@@ -16,7 +16,7 @@ async function getThumb() {
     }
 
     try {
-        const res  = await fetch(url)
+        const res  = await fetch(url, { signal: AbortSignal.timeout(10000) })
         const buf  = Buffer.from(await res.arrayBuffer())
         _thumbCache   = buf
         _thumbUrl     = url

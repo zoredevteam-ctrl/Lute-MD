@@ -122,11 +122,13 @@ const handler = async (m, { conn, command, args, text, group }) => {
         let pfp = null
         try {
             const url = await conn.profilePictureUrl(m.sender, 'image')
-            const res = await fetch(url)
+            const res = await fetch(url, { signal: AbortSignal.timeout(10000) })
             pfp = Buffer.from(await res.arrayBuffer())
         } catch {
-            const res = await fetch(global.icon)
-            pfp = Buffer.from(await res.arrayBuffer())
+            try {
+                const res = await fetch(global.icon, { signal: AbortSignal.timeout(10000) })
+                pfp = Buffer.from(await res.arrayBuffer())
+            } catch { pfp = null }
         }
 
         const texto = (group.welcomeMsg || global.welcom1)
@@ -136,7 +138,7 @@ const handler = async (m, { conn, command, args, text, group }) => {
             .replace(/{total}/g, total)
             .replace(/{num}/g,   num)
 
-        const metaUser = meta?.participants?.find(p => p.id === m.sender)
+        const metaUser = meta?.participants?.find(p => (p.id || p.jid) === m.sender)
         const userName = metaUser?.name || await global.getName(conn, m.sender) || num
 
         let card = null
@@ -171,7 +173,7 @@ const handler = async (m, { conn, command, args, text, group }) => {
 
         if (group.goodbyeGif) {
             try {
-                const res = await fetch(group.goodbyeGif)
+                const res = await fetch(group.goodbyeGif, { signal: AbortSignal.timeout(10000) })
                 const buf = Buffer.from(await res.arrayBuffer())
                 return conn.sendMessage(m.chat, {
                     video:       buf,

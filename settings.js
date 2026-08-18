@@ -97,7 +97,7 @@ global.getBannerBuffer = async () => {
         if (_bannerCache && _bannerUrl === src && Date.now() < _bannerExpires) {
             return _bannerCache
         }
-        const res  = await fetch(src)
+        const res  = await fetch(src, { signal: AbortSignal.timeout(10000) })
         const buf  = Buffer.from(await res.arrayBuffer())
         _bannerCache   = buf
         _bannerUrl     = src
