@@ -1,139 +1,208 @@
 <div align="center">
 
-<img src="https://files.catbox.moe/woge4g.jpg" width="100%" alt="Lute Banner"/>
+<img src="https://i.pinimg.com/736x/30/7e/3f/307e3f2df6f4a735f659c6f28a4fc399.jpg" width="100%" style="border-radius:12px" alt="Makima Banner"/>
+
+<br/><br/>
+
+```
+███╗   ███╗ █████╗ ██╗  ██╗██╗███╗   ███╗ █████╗
+████╗ ████║██╔══██╗██║ ██╔╝██║████╗ ████║██╔══██╗
+██╔████╔██║███████║█████╔╝ ██║██╔████╔██║███████║
+██║╚██╔╝██║██╔══██║██╔═██╗ ██║██║╚██╔╝██║██╔══██║
+██║ ╚═╝ ██║██║  ██║██║  ██╗██║██║ ╚═╝ ██║██║  ██║
+╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝     ╚═╝╚═╝  ╚═╝
+```
+
+### *"No necesito que me obedezcas. Solo necesito que no puedas hacer otra cosa."*
 
 <br/>
 
-# LUTE MD
-
-### *"No pido lealtad. La exijo."*
-
-**Bot de WhatsApp — Suprema Exorcista de las Fuerzas Extermina del Cielo**
-*Hazbin Hotel*
-
-</div>
-
-<div align="center">
-
-[![WhatsApp](https://img.shields.io/badge/PLATAFORMA-WhatsApp-1a1a1a?style=for-the-badge&logo=whatsapp&logoColor=white&labelColor=8b0000)](#)
-[![Baileys](https://img.shields.io/badge/LIBRERÍA-Baileys-1a1a1a?style=for-the-badge&labelColor=8b0000)](#)
-[![Node](https://img.shields.io/badge/Node.js-18%2B-1a1a1a?style=for-the-badge&logo=node.js&logoColor=white&labelColor=8b0000)](#)
-[![Estado](https://img.shields.io/badge/ESTADO-En%20servicio-1a1a1a?style=for-the-badge&labelColor=8b0000)](#)
+[![WhatsApp](https://img.shields.io/badge/PLATAFORMA-WhatsApp-0a0a0a?style=for-the-badge&logo=whatsapp&logoColor=white&labelColor=8b0000)](https://whatsapp.com)
+[![Baileys](https://img.shields.io/badge/LIBRERÍA-Baileys-0a0a0a?style=for-the-badge&logoColor=white&labelColor=8b0000)](https://github.com/WhiskeySockets/Baileys)
+[![Node](https://img.shields.io/badge/Node.js-18%2B-0a0a0a?style=for-the-badge&logo=node.js&logoColor=white&labelColor=8b0000)](https://nodejs.org)
+[![Estado](https://img.shields.io/badge/ESTADO-OPERACIONAL-0a0a0a?style=for-the-badge&labelColor=8b0000)](#)
+[![ZoreDevTeam](https://img.shields.io/badge/BY-ZoreDevTeam-0a0a0a?style=for-the-badge&labelColor=8b0000)](#)
 
 </div>
 
 ---
 
-## DOCTRINA
+## ` 〔 BRIEFING 〕 `
 
-No hay lugar para el desorden. No hay lugar para la debilidad.
+**Makima MD** no es un asistente. Es un sistema de control.
 
-**Lute MD** no está aquí para conversar. Está aquí para ejecutar órdenes con precisión y sin desviaciones. Cada respuesta lleva el mismo tono que su comandante: directo, cortante, sin lugar para la improvisación ni la sensiblería.
+Cada comando ejecutado, cada respuesta enviada, cada grupo moderado — todo ocurre dentro de un orden diseñado con precisión por **ZoreDevTeam**. No hay errores tolerados. No hay excepciones programadas. Solo resultados.
 
-Si buscas un bot amigable que te consienta, este no es tu lugar. Si buscas un bot que cumpla, has llegado a la fila correcta.
-
----
-
-## PANEL DE MANDO
-
-<div align="center">
-
-| [ INICIAR ] | [ CONFIGURAR ] | [ COMANDOS ] | [ SOPORTE ] |
-|:---:|:---:|:---:|:---:|
-| `npm start` | `config.js` | `.menu` | +57 305 396 0901 |
-
-</div>
+Basado en el personaje de **Makima** de *Chainsaw Man* (Tatsuki Fujimoto). El Control Devil en formato de bot de WhatsApp: manipuladora, calculadora y absolutamente inevitable.
 
 ---
 
-## INSTALACIÓN
+## ` 〔 ARQUITECTURA 〕 `
 
-**Requisitos**
+```
+makima-md/
+│
+├── 📁 cmds/                  # Comandos organizados por módulo
+│   ├── main/                 # Core: menu, ping, registro
+│   ├── economy/              # Sistema económico: bal, daily, work
+│   ├── group/                # Administración: kick, promote, welcome
+│   ├── fun/                  # Entretenimiento: ruleta, random
+│   ├── owner/                # Control total: ban, restart, update
+│   ├── downloads/            # Descargas: TikTok, YouTube, IG
+│   ├── stickers/             # Conversión de stickers
+│   └── utils/                # Herramientas: clima, traducir, calc
+│
+├── 📁 core/                  # Motor interno
+│   ├── database.js           # JSON nativo — sin dependencias externas
+│   ├── serialize.js          # Normalización de mensajes Baileys
+│   ├── print.js              # Logger visual en consola
+│   └── system/
+│       ├── cmdsLoader.js     # Carga dinámica y hot-reload de comandos
+│       └── context.js        # Constructor de contextInfo con newsletter
+│
+├── 📁 events/                # Eventos del socket
+│   ├── welcome.js            # Bienvenida con foto de perfil
+│   ├── promote-demote.js     # Detección de cambios de rango
+│   └── anti-toxic.js        # Moderación automática
+│
+├── index.js                  # Punto de entrada y conexión
+├── main.js                   # Handler central de comandos
+└── settings.js               # Configuración global con hot-reload
+```
 
-| Requisito | Mínimo |
+---
+
+## ` 〔 REQUISITOS 〕 `
+
+| Componente | Versión mínima |
 |---|---|
-| Node.js | 18.x |
-| Gestor de paquetes | npm / yarn |
-| Entorno | Termux / VPS / Pterodactyl |
+| Node.js | `18.x` o superior |
+| npm | `8.x` o superior |
+| ffmpeg | Recomendado para stickers |
+| Sistema | Linux / Termux / VPS |
 
-**Despliegue**
+---
+
+## ` 〔 INSTALACIÓN 〕 `
 
 ```bash
-# Clonar
-git clone <URL-DEL-REPOSITORIO>
-cd lute-md
+# 1. Clonar el repositorio
+git clone https://github.com/zoredevteam-ctrl/makima-md
+cd makima-md
 
-# Instalar dependencias
+# 2. Instalar dependencias
 npm install
 
-# Configurar
-cp config.example.js config.js
+# 3. Configurar en settings.js
+#    → global.owner, global.icon, global.newsletterJid
 
-# Ejecutar
-npm start
+# 4. Iniciar
+npm start          # sesión existente
+node index.js --code   # vincular con código
+node index.js --qr     # vincular con QR
 ```
 
-Vinculación mediante **código QR** o **Pairing Code** en el primer inicio. No hay segunda oportunidad para hacerlo mal.
+Al iniciar por primera vez selecciona el método de vinculación. El código aparece en consola. No hay segunda vuelta.
 
 ---
 
-## CONFIGURACIÓN
+## ` 〔 CONFIGURACIÓN RÁPIDA 〕 `
 
 ```js
-global.owner = ['573053960901'];
-global.botName = 'Lute MD';
-global.prefix = '.';
-global.banner = 'https://tu-enlace-de-banner.png';
+// settings.js — los únicos valores que necesitas cambiar
+
+global.owner = [
+    ['57XXXXXXXXXX', 'TuNombre', true],
+]
+
+global.botName = 'Makima'
+global.prefix  = '#'
+
+global.icon   = 'https://tu-imagen.jpg'
+global.banner = 'https://tu-imagen.jpg'
+
+global.newsletterJid  = '120363408182996815@newsletter'
+global.newsletterName = '🔴 𝐌𝐀𝐊𝐈𝐌𝐀'
+```
+
+Cada cambio en `settings.js` se aplica en tiempo real sin reiniciar. Hot-reload integrado.
+
+---
+
+## ` 〔 COMANDOS 〕 `
+
+| Módulo | Comandos |
+|---|---|
+| **Main** | `#menu` `#ping` `#reg` `#owner` |
+| **Economy** | `#bal` `#daily` `#work` `#crime` `#leaderboard` |
+| **Grupos** | `#kick` `#promote` `#demote` `#tagall` `#antilink` |
+| **Bienvenida** | `#welcome` `#goodbye` `#setwelcome` `#setgoodbye` |
+| **Fun** | `#random` `#ruleta` `#medir` |
+| **Owner** | `#ban` `#unban` `#restart` `#update` `#broadcast` |
+
+---
+
+## ` 〔 CARACTERÍSTICAS 〕 `
+
+```
+✦ Carga dinámica de comandos — sin reiniciar el bot
+✦ Base de datos JSON nativa — compatible con Node.js v24+
+✦ Cache de thumbnails — respuestas rápidas sin fetches repetidos
+✦ Anti-duplicate de mensajes — sin ejecuciones dobles
+✦ Cache de groupMetadata — reduce latencia en grupos
+✦ Hot-reload de settings — cambios en vivo
+✦ Eventos modulares — welcome, anti-toxic, promote/demote
+✦ Sistema de XP y niveles integrado
+✦ Newsletter de WhatsApp en cada respuesta
 ```
 
 ---
 
-## COMANDOS
+## ` 〔 STACK TÉCNICO 〕 `
 
-| Botón | Comando | Función |
-|---|---|---|
-| ⟦ MENU ⟧ | `.menu` | Despliega la lista de operaciones disponibles |
-| ⟦ ESTADO ⟧ | `.ping` | Confirma que la unidad sigue activa |
-| ⟦ MANDO ⟧ | `.owner` | Contacto directo con el propietario |
-| ⟦ REFUERZO ⟧ | `.jadibot` | Despliega una sub-unidad (sub-bot) |
-| ⟦ DISCIPLINA ⟧ | `.kick` | Expulsión de un miembro (solo administración) |
-
-*Lista sujeta a ampliación conforme se incorporen nuevos plugins.*
-
----
-
-## CANALES DE MANDO
-
-No existe grupo ni canal oficial todavía. La orden aún se está formando; cuando exista, se anunciará aquí.
-
-Para reportes, fallos o solicitudes, una sola línea directa:
-
-**Soporte — +57 305 396 0901**
-
-No se garantizan respuestas suaves. Se garantizan soluciones.
+```
+Runtime      →  Node.js 18+
+Protocol     →  @whiskeysockets/baileys
+Database     →  JSON nativo (fs)
+Logging      →  chalk + cfonts
+Media        →  sharp + ffmpeg
+Architecture →  ESModules (import/export)
+```
 
 ---
 
-## STACK
+## ` 〔 EQUIPO 〕 `
 
-- **[Baileys](https://github.com/WhiskeySockets/Baileys)** — Motor WhatsApp Multi-Dispositivo
-- **Node.js** — Entorno de ejecución
-- **Arquitectura de plugins** — Comandos modulares, sin excepciones
+<div align="center">
+
+| | Rol |
+|:---:|:---:|
+| **𝒜𝒶𝓇𝑜𝓂** | Arquitecto principal · Lead Developer |
+| **ZoreDevTeam** | Infraestructura · QA · Deploy |
+
+*Dos personas. Cero dependencia de frameworks externos innecesarios. Todo construido desde cero.*
+
+</div>
 
 ---
 
-## AVISO
+## ` 〔 AVISO LEGAL 〕 `
 
-Proyecto de fan no oficial, sin fines de lucro. Lute y Hazbin Hotel pertenecen a **Vivienne "VivziePop" Medrano** y **A24 / Studio SVGA**. Sin afiliación con los titulares originales.
+Proyecto de fan no oficial, sin fines de lucro.
 
-El uso de librerías no oficiales de WhatsApp puede infringir sus Términos de Servicio. La responsabilidad es tuya.
+Makima y Chainsaw Man son propiedad de **Tatsuki Fujimoto**, **Shueisha** y **MAPPA**. Sin afiliación con los titulares originales.
+
+El uso de librerías no oficiales de WhatsApp puede infringir sus Términos de Servicio. El usuario asume la responsabilidad total del uso.
 
 ---
 
 <div align="center">
 
-*"El Cielo no perdona el fracaso. Yo tampoco."*
+```
+"Todos los que conozco terminan controlados o eliminados."
+                                        — Makima
+```
 
-**— Lute**
+**ZoreDevTeam © 2025**
 
 </div>
