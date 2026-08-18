@@ -31,8 +31,9 @@ async function getBackground() {
     }
 }
 
-export const makeWelcomeCard = async ({ pfp, name }) => {
-    const userName = esc((name || 'Usuario').slice(0, 24))
+export const makeWelcomeCard = async ({ pfp, name, title = 'Bienvenido al grupo' }) => {
+    const titleText = esc((title || 'Bienvenido al grupo').slice(0, 26))
+    const userName  = esc((name || 'Usuario').slice(0, 24))
 
     const bg = await getBackground()
     if (!bg) return null
@@ -62,7 +63,7 @@ export const makeWelcomeCard = async ({ pfp, name }) => {
 
     const text = Buffer.from(`
         <svg width="${WIDTH}" height="${HEIGHT}">
-            <text x="${CENTER}" y="640" text-anchor="middle" font-family="DejaVu Sans, Arial, sans-serif" font-size="52" font-weight="bold" fill="#ffffff" stroke="#000000" stroke-width="2" paint-order="stroke">Bienvenido al grupo</text>
+            <text x="${CENTER}" y="640" text-anchor="middle" font-family="DejaVu Sans, Arial, sans-serif" font-size="52" font-weight="bold" fill="#ffffff" stroke="#000000" stroke-width="2" paint-order="stroke">${titleText}</text>
             <text x="${CENTER}" y="716" text-anchor="middle" font-family="DejaVu Sans, Arial, sans-serif" font-size="46" font-weight="bold" fill="#ff4655" stroke="#000000" stroke-width="2" paint-order="stroke">${userName}</text>
         </svg>`)
 

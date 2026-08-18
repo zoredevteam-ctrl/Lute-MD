@@ -3,6 +3,10 @@ import { buildCtx } from '../core/system/context.js'
 
 export const event = 'group-participants.update'
 
+// ── Config estilo Aqua (sin botón de unirse al grupo) ─────────────────────────
+const AUDIO_WELCOME = 'https://p.lempi.lat/d/co0BrChB.m4a'
+const AUDIO_GOODBYE = 'https://p.lempi.lat/d/wTRu1sKq.m4a'
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
@@ -54,14 +58,67 @@ async function getProfilePic(conn, jid) {
     }
 }
 
-// ── Texto con variables (soporta {user} y @{user} sin duplicar @) ─────────────
-const buildTexto = (template, num, groupName, total) =>
+// ── Texto con variables (soporta {user}, @{user}, {desc}, {group}, {total}, {num})
+const buildTexto = (template, num, groupName, total, desc) =>
     String(template || '')
         .replace(/@{user}/g, `@${num}`)
         .replace(/{user}/g,  `@${num}`)
+        .replace(/{desc}/g,  desc || 'Sin descripción')
         .replace(/{group}/g, groupName)
         .replace(/{total}/g, total)
         .replace(/{num}/g,   num)
+
+// ── Captions estilo Aqua (ERROR404) con branding de Lute ──────────────────────
+const fechaHoy = () => new Date().toLocaleDateString('es-ES', {
+    timeZone: 'America/Mexico_City', day: 'numeric', month: 'long', year: 'numeric'
+})
+
+const buildWelcomeCaption = ({ num, groupName, total, msg, desc }) => {
+    const canal = global.channelLink || global.rcanal || ''
+    return `> 🖤 ── ── ── ── ── ── 🖤
+>  ── ── ✦ 𝔏 𝔘 𝔗 𝔈 ✦ ── ──
+> 
+> Un alma solitaria se ha unido al vacío.
+> 
+> ❖ 𝔖𝔢𝔠𝔱𝔬𝔯 ⪢ _${groupName}_
+> ❖ ℑ𝔡𝔢𝔫𝔱𝔦𝔣𝔦𝔠𝔞𝔠𝔦𝔬́𝔫 ⪢ @${num}
+> ❖ 𝔇𝔦𝔠𝔱𝔞𝔪𝔢𝔫 ⪢ ${buildTexto(msg, num, groupName, total, desc)}
+> ❖ ℭ𝔬𝔫𝔱𝔢𝔫𝔠𝔦𝔬́𝔫 ⪢ ${total} personas atrapadas aquí.
+> ❖ ℭ𝔯𝔬𝔫𝔬𝔰 ⪢ ${fechaHoy()}
+> 
+> 🥀 _"A veces, el silencio es el único grito que nos queda..."_
+> ⛓️ 𝔘𝔫𝔢𝔱𝔢 𝔞𝔩 𝔠𝔞𝔫𝔞𝔩 𝔡𝔢𝔩 𝔡𝔬𝔩𝔬𝔯:
+> 🔗 ${canal}
+> 🖤 ── ── ── ── ── ── 🖤`
+}
+
+const buildGoodbyeCaption = ({ num, groupName, total, msg, desc }) => {
+    const canal = global.channelLink || global.rcanal || ''
+    return `> 🖤 ── ── ── ── ── ── 🖤
+>  ── ── ✦ 𝔏 𝔘 𝔗 𝔈 ✦ ── ──
+> 
+> Una presencia se ha marchado... tal vez sea mejor así.
+> 
+> ❖ 𝔖𝔢𝔠𝔱𝔬𝔯 ⪢ _${groupName}_
+> ❖ ℑ𝔡𝔢𝔫𝔱𝔦𝔣𝔦𝔠𝔞𝔠𝔦𝔬́𝔫 ⪢ @${num}
+> ❖ 𝔇𝔦𝔠𝔱𝔞𝔪𝔢𝔫 ⪢ ${buildTexto(msg, num, groupName, total, desc)}
+> ❖ ℭ𝔬𝔫𝔱𝔢𝔫𝔠𝔦𝔬́𝔫 ⪢ ${total} corazones restantes.
+> ❖ ℭ𝔯𝔬𝔫𝔬𝔰 ⪢ ${fechaHoy()}
+> 
+> 🍂 _"Cicatrices que dejamos al irnos, recuerdos que borra el viento..."_
+> ⛓️ 𝔘𝔫𝔢𝔱𝔢 𝔞𝔩 𝔠𝔞𝔫𝔞𝔩 𝔡𝔢𝔩 𝔡𝔬𝔩𝔬𝔯:
+> 🔗 ${canal}
+> 🖤 ── ── ── ── ── ── 🖤`
+}
+
+// Enviar audio de bienvenida/despedida (best effort, nunca bloquea)
+async function sendAudio(conn, id, url) {
+    try {
+        await conn.sendMessage(id, { audio: { url }, mimetype: 'audio/mp4', ptt: true })
+    } catch (e) {
+        console.error('[WELCOME][AUDIO]', e.message)
+    }
+}
 
 export const run = async (conn, update) => {
     const { id, participants = [], action } = update || {}
@@ -85,6 +142,7 @@ export const run = async (conn, update) => {
         const meta      = await withTimeout(getMeta(conn, id), 10000, null)
         const groupName = meta?.subject || id
         const total     = meta?.participants?.length || 0
+        const desc      = meta?.desc?.toString() || ''
 
         for (const raw of participants) {
             try {
@@ -96,13 +154,17 @@ export const run = async (conn, update) => {
                 const mention = [participant]
 
                 if (action === 'add') {
-                    // ── BIENVENIDA con tarjeta Canvas (sin externalAdReply) ──
+                    // ── BIENVENIDA: tarjeta Canvas + caption estilo Aqua + audio
                     const pfp = await withTimeout(getProfilePic(conn, participant), 15000, null)
 
                     const metaUser = meta?.participants?.find(p => (p.id || p.jid) === participant)
                     const userName = metaUser?.name || await withTimeout(global.getName(conn, participant), 10000, null) || num
 
-                    const texto = buildTexto(group.welcomeMsg || global.welcom1, num, groupName, total)
+                    const caption = buildWelcomeCaption({
+                        num, groupName, total,
+                        msg:  group.welcomeMsg || global.welcom1,
+                        desc
+                    })
 
                     let card = null
                     if (pfp) {
@@ -117,43 +179,53 @@ export const run = async (conn, update) => {
                     try {
                         await conn.sendMessage(id, {
                             image:    card || pfp,
-                            caption:  texto,
+                            caption,
                             mentions: mention
                         })
                         console.log('[WELCOME][SEND] bienvenida enviada a', num)
                     } catch (e) {
                         console.error('[WELCOME][SEND]', e.message, '— reintentando como texto')
-                        await conn.sendMessage(id, { text: texto, mentions: mention })
+                        await conn.sendMessage(id, { text: caption, mentions: mention })
                     }
 
-                } else if (action === 'remove') {
-                    // ── DESPEDIDA (ctx opcional, nunca bloquea) ───────────────
-                    const texto = buildTexto(group.goodbyeMsg || global.welcom2, num, groupName, total)
-                    const ctx   = await withTimeout(buildCtx(), 10000, {})
+                    await sendAudio(conn, id, AUDIO_WELCOME)
 
-                    if (group.goodbyeGif) {
+                } else if (action === 'remove') {
+                    // ── DESPEDIDA: tarjeta Canvas + caption estilo Aqua + audio
+                    const pfp = await withTimeout(getProfilePic(conn, participant), 15000, null)
+
+                    const metaUser = meta?.participants?.find(p => (p.id || p.jid) === participant)
+                    const userName = metaUser?.name || await withTimeout(global.getName(conn, participant), 10000, null) || num
+
+                    const caption = buildGoodbyeCaption({
+                        num, groupName, total,
+                        msg:  group.goodbyeMsg || global.welcom2,
+                        desc
+                    })
+
+                    let card = null
+                    if (pfp) {
                         try {
-                            const buf = await fetchBuf(group.goodbyeGif)
-                            await conn.sendMessage(id, {
-                                video:       buf,
-                                gifPlayback: true,
-                                caption:     texto,
-                                mentions:    mention,
-                                contextInfo: ctx
-                            })
-                            console.log('[WELCOME][SEND] despedida (gif) enviada a', num)
-                            continue
+                            const maker = await getCardMaker()
+                            if (maker) card = await withTimeout(maker.makeWelcomeCard({ pfp, name: userName, title: 'Adiós' }), 15000, null)
                         } catch (e) {
-                            console.error('[WELCOME][GIF]', e.message, '— se envía texto')
+                            console.error('[WELCOME][CARD]', e.message)
                         }
                     }
 
-                    await conn.sendMessage(id, {
-                        text:        texto,
-                        mentions:    mention,
-                        contextInfo: ctx
-                    })
-                    console.log('[WELCOME][SEND] despedida enviada a', num)
+                    try {
+                        await conn.sendMessage(id, {
+                            image:    card || pfp,
+                            caption,
+                            mentions: mention
+                        })
+                        console.log('[WELCOME][SEND] despedida enviada a', num)
+                    } catch (e) {
+                        console.error('[WELCOME][SEND]', e.message, '— reintentando como texto')
+                        await conn.sendMessage(id, { text: caption, mentions: mention })
+                    }
+
+                    await sendAudio(conn, id, AUDIO_GOODBYE)
                 }
             } catch (e) {
                 console.error('[WELCOME][PARTICIPANT]', e.message)
