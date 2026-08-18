@@ -3,26 +3,23 @@ import { buildCtx } from '../core/system/context.js'
 
 export const event = 'group-participants.update'
 
-// ── Config estilo Aqua (sin botón de unirse al grupo) ─────────────────────────
 const AUDIO_WELCOME = 'https://p.lempi.lat/d/co0BrChB.m4a'
 const AUDIO_GOODBYE = 'https://p.lempi.lat/d/wTRu1sKq.m4a'
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
 
 const sleep = ms => new Promise(r => setTimeout(r, ms))
 
-// Fetch con timeout — nunca cuelga el evento
+
 const fetchBuf = async (url, timeout = 10000) => {
     const res = await fetch(url, { signal: AbortSignal.timeout(timeout) })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     return Buffer.from(await res.arrayBuffer())
 }
 
-// Ejecuta una promesa y la abandona si tarda más de X ms
+
 const withTimeout = (p, ms = 10000, fallback = null) =>
     Promise.race([Promise.resolve(p), sleep(ms).then(() => fallback)])
 
-// ── Carga perezosa del generador de tarjetas (no rompe el evento si sharp falla)
 let _cardMaker = null
 async function getCardMaker() {
     if (_cardMaker) return _cardMaker
@@ -35,7 +32,6 @@ async function getCardMaker() {
     return _cardMaker
 }
 
-// ── Metadata del grupo (cache 2 min) ──────────────────────────────────────────
 const metaCache = new Map()
 async function getMeta(conn, id) {
     const c = metaCache.get(id)
@@ -47,7 +43,6 @@ async function getMeta(conn, id) {
     } catch { return null }
 }
 
-// ── Foto de perfil (con fallback al icono del bot) ────────────────────────────
 async function getProfilePic(conn, jid) {
     try {
         const url = await conn.profilePictureUrl(jid, 'image')
@@ -58,7 +53,6 @@ async function getProfilePic(conn, jid) {
     }
 }
 
-// ── Texto con variables (soporta {user}, @{user}, {desc}, {group}, {total}, {num})
 const buildTexto = (template, num, groupName, total, desc) =>
     String(template || '')
         .replace(/@{user}/g, `@${num}`)
@@ -68,7 +62,6 @@ const buildTexto = (template, num, groupName, total, desc) =>
         .replace(/{total}/g, total)
         .replace(/{num}/g,   num)
 
-// ── Captions estilo Aqua (ERROR404) con branding de Lute ──────────────────────
 const fechaHoy = () => new Date().toLocaleDateString('es-ES', {
     timeZone: 'America/Mexico_City', day: 'numeric', month: 'long', year: 'numeric'
 })
@@ -111,7 +104,6 @@ const buildGoodbyeCaption = ({ num, groupName, total, msg, desc }) => {
 > 🖤 ── ── ── ── ── ── 🖤`
 }
 
-// Enviar audio de bienvenida/despedida (best effort, nunca bloquea)
 async function sendAudio(conn, id, url) {
     try {
         await conn.sendMessage(id, { audio: { url }, mimetype: 'audio/mp4', ptt: true })
@@ -146,7 +138,7 @@ export const run = async (conn, update) => {
 
         for (const raw of participants) {
             try {
-                // Acepta strings ("5842...@s.whatsapp.net") u objetos ({id}/{jid})
+                
                 const participant = typeof raw === 'object' ? (raw.id || raw.jid) : String(raw)
                 if (!participant) continue
 
@@ -154,7 +146,6 @@ export const run = async (conn, update) => {
                 const mention = [participant]
 
                 if (action === 'add') {
-                    // ── BIENVENIDA: tarjeta Canvas + caption estilo Aqua + audio
                     const pfp = await withTimeout(getProfilePic(conn, participant), 15000, null)
 
                     const metaUser = meta?.participants?.find(p => (p.id || p.jid) === participant)
@@ -191,7 +182,6 @@ export const run = async (conn, update) => {
                     await sendAudio(conn, id, AUDIO_WELCOME)
 
                 } else if (action === 'remove') {
-                    // ── DESPEDIDA: tarjeta Canvas + caption estilo Aqua + audio
                     const pfp = await withTimeout(getProfilePic(conn, participant), 15000, null)
 
                     const metaUser = meta?.participants?.find(p => (p.id || p.jid) === participant)

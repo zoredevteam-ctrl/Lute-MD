@@ -2,14 +2,15 @@ import sharp from 'sharp'
 import { readFileSync, existsSync } from 'fs'
 import { join } from 'path'
 
-const WIDTH  = 900
-const HEIGHT = 900
-const CENTER = WIDTH / 2
-const PFP_Y  = 380
+const WIDTH    = 900
+const HEIGHT   = 900
+const CENTER   = WIDTH / 2
+const PFP_Y    = 380
 const PFP_SIZE = 340
-const RADIUS = PFP_SIZE / 2
+const RADIUS   = PFP_SIZE / 2
 
-const MAKIMA_PATH = join(process.cwd(), 'media', 'makima.jpg')
+const BG_URL  = 'https://raw.githubusercontent.com/yosue891/Shadow-MD/refs/heads/main/IMG-20260818-WA0536.jpg'
+const BG_PATH = join(process.cwd(), 'media', 'welcome-bg.jpg')
 
 const esc = (str) =>
     String(str)
@@ -20,11 +21,11 @@ const esc = (str) =>
         .replace(/'/g, '&apos;')
 
 async function getBackground() {
-    if (existsSync(MAKIMA_PATH)) {
-        return readFileSync(MAKIMA_PATH)
+    if (existsSync(BG_PATH)) {
+        return readFileSync(BG_PATH)
     }
     try {
-        const res = await fetch(global.icon, { signal: AbortSignal.timeout(10000) })
+        const res = await fetch(BG_URL, { signal: AbortSignal.timeout(10000) })
         return Buffer.from(await res.arrayBuffer())
     } catch {
         return null

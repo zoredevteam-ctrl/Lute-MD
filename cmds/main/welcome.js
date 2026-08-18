@@ -70,7 +70,6 @@ const handler = async (m, { conn, command, args, text, group }) => {
     const ctx    = await buildCtx()
     const estado = args[0]?.toLowerCase()
 
-    // ── #welcome on/off (solo texto, sin imagen ni botón) ─────────────────────
     if (command === 'welcome') {
         if (!['on', 'off'].includes(estado)) {
             return conn.sendMessage(m.chat, {
@@ -97,7 +96,6 @@ const handler = async (m, { conn, command, args, text, group }) => {
         }, { quoted: m })
     }
 
-    // ── #goodbye on/off (solo texto, sin imagen ni botón) ─────────────────────
     if (command === 'goodbye') {
         if (!['on', 'off'].includes(estado)) {
             return conn.sendMessage(m.chat, {
@@ -118,7 +116,6 @@ const handler = async (m, { conn, command, args, text, group }) => {
         }, { quoted: m })
     }
 
-    // ── #setwelcome <texto> ───────────────────────────────────────────────────
     if (command === 'setwelcome') {
         if (!text?.trim()) {
             return conn.sendMessage(m.chat, {
@@ -134,7 +131,6 @@ const handler = async (m, { conn, command, args, text, group }) => {
         }, { quoted: m })
     }
 
-    // ── #setgoodbye <texto> ───────────────────────────────────────────────────
     if (command === 'setgoodbye') {
         if (!text?.trim()) {
             return conn.sendMessage(m.chat, {
@@ -150,7 +146,6 @@ const handler = async (m, { conn, command, args, text, group }) => {
         }, { quoted: m })
     }
 
-    // ── #testwelcome ──────────────────────────────────────────────────────────
     if (command === 'testwelcome') {
         const meta  = await conn.groupMetadata(m.chat)
         const total = meta?.participants?.length || 0
@@ -205,7 +200,6 @@ const handler = async (m, { conn, command, args, text, group }) => {
         }).catch(() => {})
     }
 
-    // ── #testgoodbye ─────────────────────────────────────────────────────────
     if (command === 'testgoodbye') {
         const meta  = await conn.groupMetadata(m.chat)
         const total = meta?.participants?.length || 0
