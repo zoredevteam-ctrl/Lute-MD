@@ -50,7 +50,7 @@ export const run = async (conn, update) => {
             const mention = [participant]
 
             if (action === 'add') {
-                // ── BIENVENIDA con tarjeta Canvas ─────────────────────────
+                // ── BIENVENIDA con tarjeta Canvas (sin externalAdReply) ───
                 const pfp = await getProfilePic(conn, participant)
 
                 const texto = (group.welcomeMsg || global.welcom1)
@@ -62,19 +62,23 @@ export const run = async (conn, update) => {
                 const metaUser = meta?.participants?.find(p => p.id === participant)
                 const userName = metaUser?.name || await global.getName(conn, participant) || num
 
+                let card = null
+                try {
+                    card = await makeWelcomeCard({ pfp, name: userName })
+                } catch (e) {
+                    console.error('[WELCOME][CARD]', e.message)
+                }
+
                 if (pfp) {
-                    const card = await makeWelcomeCard({ pfp, name: userName })
                     await conn.sendMessage(id, {
-                        image:       card || pfp,
-                        caption:     texto,
-                        mentions:    mention,
-                        contextInfo: ctx
+                        image:    card || pfp,
+                        caption:  texto,
+                        mentions: mention
                     })
                 } else {
                     await conn.sendMessage(id, {
-                        text:        texto,
-                        mentions:    mention,
-                        contextInfo: ctx
+                        text:     texto,
+                        mentions: mention
                     })
                 }
 

@@ -127,13 +127,17 @@ const handler = async (m, { conn, command, args, text, group }) => {
         const metaUser = meta?.participants?.find(p => p.id === m.sender)
         const userName = metaUser?.name || await global.getName(conn, m.sender) || num
 
-        const card = pfp ? await makeWelcomeCard({ pfp, name: userName }) : null
+        let card = null
+        try {
+            card = await makeWelcomeCard({ pfp, name: userName })
+        } catch (e) {
+            console.error('[WELCOME][CARD]', e.message)
+        }
 
         return conn.sendMessage(m.chat, {
-            image:       card || pfp,
-            caption:     texto,
-            mentions:    [m.sender],
-            contextInfo: ctx
+            image:    card || pfp,
+            caption:  texto,
+            mentions: [m.sender]
         }, { quoted: m })
     }
 
