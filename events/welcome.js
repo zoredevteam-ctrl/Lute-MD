@@ -1,8 +1,20 @@
 import { database } from '../core/database.js'
 import { buildCtx } from '../core/system/context.js'
-import { makeWelcomeCard } from '../core/system/welcomeCard.js'
 
 export const event = 'group-participants.update'
+
+// ── Carga perezosa del generador de tarjetas (no rompe el evento si sharp falla)
+let _cardMaker = null
+async function getCardMaker() {
+    if (_cardMaker) return _cardMaker
+    try {
+        _cardMaker = await import('../core/system/welcomeCard.js')
+    } catch (e) {
+        console.error('[WELCOME][CARD-MODULE]', e.message)
+        _cardMaker = null
+    }
+    return _cardMaker
+}
 
 const metaCache = new Map()
 async function getMeta(conn, id) {
@@ -54,6 +66,7 @@ export const run = async (conn, update) => {
                 const pfp = await getProfilePic(conn, participant)
 
                 const texto = (group.welcomeMsg || global.welcom1)
+                    .replace(/@{user}/g, `@${num}`)
                     .replace(/{user}/g,  `@${num}`)
                     .replace(/{group}/g, groupName)
                     .replace(/{total}/g, total)
@@ -63,10 +76,13 @@ export const run = async (conn, update) => {
                 const userName = metaUser?.name || await global.getName(conn, participant) || num
 
                 let card = null
-                try {
-                    card = await makeWelcomeCard({ pfp, name: userName })
-                } catch (e) {
-                    console.error('[WELCOME][CARD]', e.message)
+                if (pfp) {
+                    try {
+                        const maker = await getCardMaker()
+                        if (maker) card = await maker.makeWelcomeCard({ pfp, name: userName })
+                    } catch (e) {
+                        console.error('[WELCOME][CARD]', e.message)
+                    }
                 }
 
                 if (pfp) {
@@ -85,6 +101,7 @@ export const run = async (conn, update) => {
             } else if (action === 'remove') {
                 // ── DESPEDIDA con GIF (si está configurado) ───────────────
                 const texto = (group.goodbyeMsg || global.welcom2)
+                    .replace(/@{user}/g, `@${num}`)
                     .replace(/{user}/g,  `@${num}`)
                     .replace(/{group}/g, groupName)
                     .replace(/{total}/g, total)

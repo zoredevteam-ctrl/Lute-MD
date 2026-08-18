@@ -1,5 +1,16 @@
 import { buildCtx } from '../../core/system/context.js'
-import { makeWelcomeCard } from '../../core/system/welcomeCard.js'
+
+let _cardMaker = null
+async function getCardMaker() {
+    if (_cardMaker) return _cardMaker
+    try {
+        _cardMaker = await import('../../core/system/welcomeCard.js')
+    } catch (e) {
+        console.error('[WELCOME][CARD-MODULE]', e.message)
+        _cardMaker = null
+    }
+    return _cardMaker
+}
 
 const handler = async (m, { conn, command, args, text, group }) => {
     const ctx    = await buildCtx()
@@ -119,7 +130,8 @@ const handler = async (m, { conn, command, args, text, group }) => {
         }
 
         const texto = (group.welcomeMsg || global.welcom1)
-            .replace(/{user}/g,  `@${num}`)
+            .replace(/@{user}/g,  `@${num}`)
+            .replace(/{user}/g,   `@${num}`)
             .replace(/{group}/g, meta?.subject || m.chat)
             .replace(/{total}/g, total)
             .replace(/{num}/g,   num)
@@ -128,10 +140,13 @@ const handler = async (m, { conn, command, args, text, group }) => {
         const userName = metaUser?.name || await global.getName(conn, m.sender) || num
 
         let card = null
-        try {
-            card = await makeWelcomeCard({ pfp, name: userName })
-        } catch (e) {
-            console.error('[WELCOME][CARD]', e.message)
+        if (pfp) {
+            try {
+                const maker = await getCardMaker()
+                if (maker) card = await maker.makeWelcomeCard({ pfp, name: userName })
+            } catch (e) {
+                console.error('[WELCOME][CARD]', e.message)
+            }
         }
 
         return conn.sendMessage(m.chat, {
@@ -148,7 +163,8 @@ const handler = async (m, { conn, command, args, text, group }) => {
         const num   = m.sender.split('@')[0]
 
         const texto = (group.goodbyeMsg || global.welcom2)
-            .replace(/{user}/g,  `@${num}`)
+            .replace(/@{user}/g,  `@${num}`)
+            .replace(/{user}/g,   `@${num}`)
             .replace(/{group}/g, meta?.subject || m.chat)
             .replace(/{total}/g, total)
             .replace(/{num}/g,   num)
