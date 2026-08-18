@@ -8,6 +8,7 @@ const scriptPath = fileURLToPath(import.meta.url)
 // ─── OWNERS ──────────────────────────────────────────────────────────────────
 global.owner = [
     ['573107400303', 'Arom', true],
+    ['584242773183', 'Owner', false],
 ]
 global.mods   = []
 global.prems  = []

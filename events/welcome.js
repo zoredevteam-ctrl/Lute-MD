@@ -1,5 +1,6 @@
 import { database } from '../core/database.js'
 import { buildCtx } from '../core/system/context.js'
+import { makeWelcomeCard } from '../core/system/welcomeCard.js'
 
 export const event = 'group-participants.update'
 
@@ -49,7 +50,7 @@ export const run = async (conn, update) => {
             const mention = [participant]
 
             if (action === 'add') {
-                // ── BIENVENIDA con foto de perfil ─────────────────────────
+                // ── BIENVENIDA con tarjeta Canvas ─────────────────────────
                 const pfp = await getProfilePic(conn, participant)
 
                 const texto = (group.welcomeMsg || global.welcom1)
@@ -58,9 +59,13 @@ export const run = async (conn, update) => {
                     .replace(/{total}/g, total)
                     .replace(/{num}/g,   num)
 
+                const metaUser = meta?.participants?.find(p => p.id === participant)
+                const userName = metaUser?.name || await global.getName(conn, participant) || num
+
                 if (pfp) {
+                    const card = await makeWelcomeCard({ pfp, name: userName })
                     await conn.sendMessage(id, {
-                        image:       pfp,
+                        image:       card || pfp,
                         caption:     texto,
                         mentions:    mention,
                         contextInfo: ctx

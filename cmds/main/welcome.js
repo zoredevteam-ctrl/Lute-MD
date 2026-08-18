@@ -1,4 +1,5 @@
 import { buildCtx } from '../../core/system/context.js'
+import { makeWelcomeCard } from '../../core/system/welcomeCard.js'
 
 const handler = async (m, { conn, command, args, text, group }) => {
     const ctx    = await buildCtx()
@@ -123,8 +124,13 @@ const handler = async (m, { conn, command, args, text, group }) => {
             .replace(/{total}/g, total)
             .replace(/{num}/g,   num)
 
+        const metaUser = meta?.participants?.find(p => p.id === m.sender)
+        const userName = metaUser?.name || await global.getName(conn, m.sender) || num
+
+        const card = pfp ? await makeWelcomeCard({ pfp, name: userName }) : null
+
         return conn.sendMessage(m.chat, {
-            image:       pfp,
+            image:       card || pfp,
             caption:     texto,
             mentions:    [m.sender],
             contextInfo: ctx
