@@ -35,7 +35,6 @@ async function resizeImage(imageInput, width = 1000, height = 700) {
 
   try {
     const Jimp = await loadJimp()
-
     let buffer = imageInput
 
     if (typeof imageInput === 'string' && /^https?:\/\//.test(imageInput)) {
@@ -96,7 +95,7 @@ function quotedContext(m) {
   }
 }
 
-async function sendInteractiveMenu(sock, m, menu) {
+async function sendInteractiveMenu(conn, m, menu) {
   const sender = getSender(m)
 
   const imageBuffer = await resizeImage(
@@ -106,41 +105,33 @@ async function sendInteractiveMenu(sock, m, menu) {
   )
 
   if (!imageBuffer) {
-    return sock.sendMessage(
+    return conn.sendMessage(
       m.chat,
-      {
-        text: menu
-      },
-      {
-        quoted: m
-      }
+      { text: menu },
+      { quoted: m }
     )
   }
 
   const media = await prepareWAMessageMedia(
-    {
-      image: imageBuffer
-    },
-    {
-      upload: sock.waUploadToServer
-    }
+    { image: imageBuffer },
+    { upload: conn.waUploadToServer }
   )
 
   const nativeFlowPayload = proto.Message.InteractiveMessage.fromObject({
-    header: {
-      title: null,
+    header: proto.Message.InteractiveMessage.Header.fromObject({
+      title: '',
       subtitle: '© Makima Bot',
       hasMediaAttachment: true,
       imageMessage: media.imageMessage
-    },
+    }),
 
-    body: {
+    body: proto.Message.InteractiveMessage.Body.fromObject({
       text: menu
-    },
+    }),
 
-    footer: {
+    footer: proto.Message.InteractiveMessage.Footer.fromObject({
       text: '© Makima Bot'
-    },
+    }),
 
     nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.fromObject({
       buttons: [
@@ -148,19 +139,12 @@ async function sendInteractiveMenu(sock, m, menu) {
           name: 'cta_url',
           buttonParamsJson: JSON.stringify({
             display_text: 'Unirse al grupo',
-            url: config.group_url || 'https://chat.whatsapp.com/TU_LINK_DE_GRUPO',
-            merchant_url: config.group_url || 'https://chat.whatsapp.com/TU_LINK_DE_GRUPO'
+            url: config.group_url || 'https://chat.whatsapp.com',
+            merchant_url: config.group_url || 'https://chat.whatsapp.com'
           })
         }
       ],
-      messageParamsJson: JSON.stringify({
-        limited_time_offer: {
-          text: '×͜× 𝗠𝗲𝗻𝘂 𝗟𝗶𝘀𝘁',
-          url: 'https://p.lempi.lat/d/js1uEz60.jpg',
-          copy_code: null,
-          expiration_time: null
-        }
-      })
+      messageParamsJson: ''
     }),
 
     contextInfo: {
@@ -187,13 +171,11 @@ async function sendInteractiveMenu(sock, m, menu) {
     },
     {
       quoted: m,
-      userJid: sock.user?.jid || sock.user?.id
+      userJid: conn.user?.jid || conn.user?.id
     }
   )
 
-  return sock.relayMessage(m.chat, msg.message, {
-    messageId: msg.key.id
-  })
+  return conn.relayMessage(m.chat, msg.message, { messageId: msg.key.id })
 }
 
 function toArray(value) {
@@ -221,67 +203,64 @@ function getPlugins(ctx = {}) {
   return []
 }
 
-const handler = async (sock, m, ctx = {}) => {
-  const conn = sock.relayMessage ? sock : ctx.conn || sock
-  const plugins = getPlugins(ctx)
-
-  if (!plugins.length) return m.reply('No hay comandos cargados.')
+const handler = async (m, extra = {}) => {
+  const conn = extra.conn || (m.chat ? extra : global.conn)
+  const plugins = getPlugins(extra)
 
   const categories = new Map()
 
-  for (const plugin of plugins) {
-    if (!plugin || plugin.disabled || plugin.hidden) continue
+  if (plugins.length) {
+    for (const plugin of plugins) {
+      if (!plugin || plugin.disabled || plugin.hidden) continue
 
-    const views = unique(
-      toArray(plugin.view || plugin.command)
-        .map(v => String(v || '').trim())
-    )
+      const views = unique(
+        toArray(plugin.view || plugin.command)
+          .map(v => String(v || '').trim())
+      )
 
-    if (!views.length) continue
+      if (!views.length) continue
 
-    const pluginCategories = unique(
-      toArray(plugin.category || plugin.tags || 'otros')
-        .map(c => String(c || 'otros').trim().toLowerCase())
-    )
+      const pluginCategories = unique(
+        toArray(plugin.category || plugin.tags || 'otros')
+          .map(c => String(c || 'otros').trim().toLowerCase())
+      )
 
-    for (const category of pluginCategories) {
-      if (!categories.has(category)) categories.set(category, [])
-      categories.get(category).push(...views)
+      for (const category of pluginCategories) {
+        if (!categories.has(category)) categories.set(category, [])
+        categories.get(category).push(...views)
+      }
     }
   }
 
-  if (categories.size === 0) return m.reply('No hay comandos cargados.')
-
   let menu = `☹︎ Hola, soy *Makima*, aquí está la lista de comandos disponibles.\n\n`
 
-  for (const category of [...categories.keys()].sort()) {
-    const cmds = unique(categories.get(category)).sort()
-
-    menu += `*${category.toUpperCase()}*\n`
-    menu += cmds.map(c => `. # 🜲 *${c}*`).join('\n')
-    menu += '\n\n'
+  if (categories.size > 0) {
+    for (const category of [...categories.keys()].sort()) {
+      const cmds = unique(categories.get(category)).sort()
+      menu += `*${category.toUpperCase()}*\n`
+      menu += cmds.map(c => `. # 🜲 *${c}*`).join('\n')
+      menu += '\n\n'
+    }
+  } else {
+    menu += `• .menu\n• .ping\n• .bot`
   }
 
   try {
     return await sendInteractiveMenu(conn, m, menu.trim())
   } catch (e) {
-    console.error('Error enviando el menu:', e)
+    console.error('Error enviando el menu interactivo:', e)
 
     try {
       return await conn.sendMessage(
         m.chat,
         {
-          image: {
-            url: 'https://p.lempi.lat/d/js1uEz60.jpg'
-          },
+          image: { url: 'https://p.lempi.lat/d/js1uEz60.jpg' },
           caption: menu.trim()
         },
-        {
-          quoted: m
-        }
+        { quoted: m }
       )
     } catch {
-      return m.reply(menu.trim())
+      return conn.sendMessage(m.chat, { text: menu.trim() }, { quoted: m })
     }
   }
 }
