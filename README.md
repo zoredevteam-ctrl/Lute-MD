@@ -23,16 +23,6 @@
 
 <div align="center">
 
-## 🩸 CONTROL
-
-</div>
-
-No pido permiso. No negocio. Actúo, y todo lo demás se acomoda a mi alrededor — igual que este bot.
-
-**Maki MD** es un bot de WhatsApp construido sobre **Baileys**, diseñado con la misma frialdad y eficiencia que define a Makima. Sin ruido innecesario. Sin decoración vacía. Cada función existe porque tiene un propósito.
-
-No estoy aquí para agradarte. Estoy aquí para que las cosas funcionen.
-
 <br>
 
 ---
