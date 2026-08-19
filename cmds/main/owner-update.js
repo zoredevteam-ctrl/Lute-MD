@@ -5,7 +5,7 @@ const handler = async (m, { conn }) => {
     const ctx = await buildCtx()
 
     await conn.sendMessage(m.chat, {
-        text: '⚔️ Verificando actualizaciones...',
+        text: '⊚ Verificando actualizaciones...',
         contextInfo: ctx
     }, { quoted: m })
 
@@ -13,7 +13,7 @@ const handler = async (m, { conn }) => {
         if (err) {
             return conn.sendMessage(m.chat, {
                 text:
-                    `⚔️ *ERROR AL ACTUALIZAR*\n` +
+                    `⊚ *ERROR AL ACTUALIZAR*\n` +
                     `> ${err.message.slice(0, 300)}`,
                 contextInfo: ctx
             }, { quoted: m })
@@ -24,12 +24,12 @@ const handler = async (m, { conn }) => {
 
         await conn.sendMessage(m.chat, {
             text: alreadyUpdated
-                ? `⚔️ *LUTE · ACTUALIZACIÓN*\n> Ya estás en la versión más reciente.`
-                : `⚔️ *LUTE · ACTUALIZACIÓN COMPLETADA*\n\n${output}\n\n> Reinicia el bot para aplicar los cambios.`,
+                ? `⊚ *LUTE · ACTUALIZACIÓN*\n> Ya estás en la versión más reciente.`
+                : `⊚ *LUTE · ACTUALIZACIÓN COMPLETADA*\n\n${output}\n\n> Reinicia el bot para aplicar los cambios.`,
             contextInfo: ctx
         }, { quoted: m })
 
-        await m.react(alreadyUpdated ? '✅' : '⚔️')
+        await m.react(alreadyUpdated ? '✅' : '🪶')
     })
 }
 
