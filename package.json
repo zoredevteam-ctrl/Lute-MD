@@ -1,32 +1,31 @@
 {
-  "name": "lute-md",
+  "name": "makima-md",
   "version": "1.0.0",
-  "description": "Lute MD \u2014 WhatsApp Bot \u00b7 Hazbin Hotel \u00b7 ZoreDevTeam",
+  "description": "Makima MD — WhatsApp Bot · Chainsaw Man · ZoreDevTeam",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "qr": "node index.js --qr",
-    "code": "node index.js --code",
-    "install-all": "npm install && echo '\u2705 Dependencias instaladas'"
+    "qr":    "node index.js --qr",
+    "code":  "node index.js --code"
   },
   "author": "ZoreDevTeam",
   "license": "MIT",
   "dependencies": {
     "@whiskeysockets/baileys": "github:Kone457/bails",
-    "axios": "^1.6.0",
-    "chalk": "^5.3.0",
-    "cheerio": "^1.0.0-rc.12",
-    "file-type": "^18.0.0",
-    "form-data": "^4.0.1",
-    "fs-extra": "^11.2.0",
-    "node-fetch": "2.7.0",
-    "pino": "^8.17.0",
+    "axios":           "^1.7.0",
+    "cfonts":          "^3.3.0",
+    "chalk":           "^5.3.0",
+    "cheerio":         "^1.0.0-rc.12",
+    "file-type":       "^18.0.0",
+    "form-data":       "^4.0.1",
+    "fs-extra":        "^11.2.0",
+    "node-fetch":      "2.7.0",
+    "pino":            "^8.17.0",
     "qrcode-terminal": "^0.12.0",
-    "readline-sync": "^1.4.10",
-    "sharp": "^0.33.4",
-    "uuid": "^10.0.0",
-    "yt-search": "^2.12.1",
-    "cfonts": "^3.3.0"
+    "readline-sync":   "^1.4.10",
+    "sharp":           "^0.33.4",
+    "uuid":            "^10.0.0",
+    "yt-search":       "^2.12.1"
   }
 }
