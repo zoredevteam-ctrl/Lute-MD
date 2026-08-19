@@ -108,13 +108,15 @@ export async function mainHandler(m, conn, loader) {
         if (m.id?.startsWith('BAE5') && m.id.length === 16) return
         if (m.id?.startsWith('NJX-')) return
 
-        const prefix = (global.prefix || '#')
-        if (!m.body.startsWith(prefix)) return
-
-        const body        = m.body.slice(prefix.length).trim()
-        const parts       = body.split(/ +/)
+        const prefix    = (global.prefix || '#')
+        const hasPrefix = m.body.startsWith(prefix)
+        const body      = hasPrefix ? m.body.slice(prefix.length).trim() : m.body.trim()
+        const parts     = body.split(/ +/)
         const commandName = parts.shift()?.toLowerCase()
         if (!commandName) return
+
+        // Si no tiene prefijo, solo procesar si el comando existe
+        if (!hasPrefix && !loader.get(commandName)) return
 
         const args = parts
         const text = args.join(' ')
