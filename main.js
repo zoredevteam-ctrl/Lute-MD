@@ -68,20 +68,20 @@ const similarity = (a, b) => {
 // ── Mensajes de error estilo Lute ─────────────────────────────────────────────
 global.dfail = async (type, m, conn, prefix = '#') => {
     const msgs = {
-        rowner:   `*😼* Está función solo puede ser usada por mi *creador.*\n> ✰ 𝒜𝒶𝓇𝑜𝓂 (•̀ᴗ•́)و`,
-        owner:    `*😼* Está función solo puede ser usada por mi *creador.*\n> ✰ 𝒜𝒶𝓇𝑜𝓂 (•̀ᴗ•́)و`,
-        mods:     `*😼* Está función solo puede ser usada por mi *creador.*\n> ✰ 𝒜𝒶𝓇𝑜𝓂 (•̀ᴗ•́)و`,
-        premium:  `*👑* Está función solo puede ser usada por los *usuarios Premium.*`,
-        group:    `*👑* Está función encantada solo puede ser usada en reinos de poder *(grupos).*`,
-        private:  `*👑* Está función encantada solo puede ser ejecutada en mi casa *(chat privado).*`,
-        admin:    `*👑* Está función encantada solo puede ser ejecutada por las personas más importantes del reino *(grupo).*`,
-        botAdmin: `*👑* Está función encantada solo puede ser ejecutada si yo soy administradora de este reino *(grupo).*`,
-        register: `*👑* Está función encantada solo puede ser usada si estás *registrado.*\n> ✰ Usa *${prefix}reg nombre.edad*`,
-        banned:   `*👑* Estás *baneado/a*, no puedes usar comandos en este bot.`,
-        restrict: `*👑* Está función encantada fue desactivada por mi creador *(𝒜𝒶𝓇𝑜𝓂).*`,
-        limit:    `*👑* Está función encantada solo puede ser usada si tienes *límites disponibles.*\n> ✰ Los usuarios *Premium* tienen límites ilimitados.`,
-        modeOff:  `*👑* El bot está en *modo privado.*\n> ✰ Solo el creador puede usarme ahora.`,
-        modeAdmin:`*👑* El *modo admin* está activo.\n> ✰ Solo los administradores pueden usar comandos aquí.`,
+        rowner:   `*ᐛ🎀* Esa función es exclusiva de mi *creador.*\n> ✰ 𝓐𝓪𝓻𝓸𝓶 — y no, no hay excepciones.`,
+        owner:    `*ᐛ🎀* Solo mis *creadores* pueden usar eso.\n> ✰ 𝓐𝓪𝓻𝓸𝓶 — tú no estás en esa lista.`,
+        mods:     `*ᐛ🎀* Solo mis *creadores* pueden usar eso.\n> ✰ 𝓐𝓪𝓻𝓸𝓶 — tú no estás en esa lista.`,
+        premium:  `*ᐛ🎀* Esa función es para usuarios *Premium.*\n> ✰ Consíguelo. O simplemente acepta que no puedes.`,
+        group:    `*ᐛ🎀* Esa función solo existe en *grupos.*\n> ✰ Ve a uno. No es tan difícil.`,
+        private:  `*ᐛ🎀* Esa función solo se ejecuta en *privado.*\n> ✰ Escríbeme directamente si quieres algo de mí.`,
+        admin:    `*ᐛ🎀* Esa función es para *administradores.*\n> ✰ Consigue el rango. Mientras tanto, retírate.`,
+        botAdmin: `*ᐛ🎀* Necesito ser *administradora* del grupo para hacer eso.\n> ✰ Dame admin. No te lo pediré dos veces.`,
+        register: `*ᐛ🎀* No interactúo con desconocidos sin identificación.\n> ✰ Usa *${prefix}reg nombre.edad* y vuelve.`,
+        banned:   `*ᐛ🎀* Estás fuera de mi alcance. *Baneado.*\n> ✰ No hay apelaciones. Ya lo decidí.`,
+        restrict: `*ᐛ🎀* Esa función fue *desactivada* por mi creador.\n> ✰ 𝓐𝓪𝓻𝓸𝓶 tomó esa decisión. No yo.`,
+        limit:    `*ᐛ🎀* Sin *límites disponibles.*\n> ✰ Los usuarios Premium no conocen ese problema. Tú sí.`,
+        modeOff:  `*ᐛ🎀* Estoy en *modo privado.*\n> ✰ Solo mi creador puede usarme ahora. Vuelve después.`,
+        modeAdmin:`*ᐛ🎀* *Modo admin* activo en este grupo.\n> ✰ Solo los administradores tienen acceso. Tú no.`,
     }
 
     const text = msgs[type]
@@ -148,7 +148,14 @@ export async function mainHandler(m, conn, loader) {
         const isPremium  = isOwner  || isPremiumJid(m.sender)
         const isGroup    = m.isGroup
 
-        if (global.botOff && !isOwner) return global.dfail('modeOff',  m, conn, prefix)
+        if (global.botOff && !isOwner) {
+            const ctx = await buildCtx()
+            await conn.sendMessage(m.chat, {
+                text: '⊚ *COMANDOS DESACTIVADOS*\n> El owner principal desactivó los comandos por mantenimiento, pronto estarán activos [👑]',
+                contextInfo: ctx
+            }, { quoted: m })
+            return
+        }
 
         const user  = database.getUser(m.sender)
         const group = isGroup ? database.getGroup(m.chat) : null
