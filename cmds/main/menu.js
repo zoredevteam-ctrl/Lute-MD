@@ -54,11 +54,11 @@ const handler = async (m, { conn }) => {
     for (const category of [...categories.keys()].sort()) {
       const cmds = unique(categories.get(category)).sort()
       menuText += `*${category.toUpperCase()}*\n`
-      menuText += cmds.map(c => `. # 🜲 *${c}*`).join('\n')
+      menuText += cmds.map(c => `• #${c}`).join('\n')
       menuText += '\n\n'
     }
   } else {
-    menuText += `• # menu\n• # ping\n• # bot`
+    menuText += '• #menu\n• #ping\n• #bot'
   }
 
   const msg = generateWAMessageFromContent(m.chat, {

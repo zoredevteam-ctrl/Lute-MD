@@ -14,6 +14,8 @@ export class CmdsLoader {
     async loadAll() {
         const files = this._getFiles(this.cmdsDir)
         await Promise.all(files.map(f => this._load(f)))
+        global.plugins  = this.commands
+        global.commands = this.commands
         this.log.success(`${this.commands.size} comandos cargados`)
     }
 
