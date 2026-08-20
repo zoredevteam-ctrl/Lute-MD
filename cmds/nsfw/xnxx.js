@@ -36,6 +36,6 @@ const handler = async (m, { conn, text }) => {
   }
 }
 
-handler.command = ['xnxx']
+handler.command = ['xnxx', 'play']
 handler.tags    = ['nsfw']
 export default handler
