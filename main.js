@@ -137,7 +137,7 @@ export async function mainHandler(m, conn, loader) {
                 : '> ✦ Sin sugerencias.'
 
             return m.reply(
-                `*⚔️ COMANDO INVÁLIDO*\n` +
+                `*❀ COMANDO INVÁLIDO*\n` +
                 `> *(${prefix}${commandName})* no está en mi registro.\n` +
                 `> Usa *${prefix}menu* para ver los disponibles.\n\n` +
                 `*Similares:*\n${sugs}`
