@@ -1,4 +1,4 @@
-import { generateWAMessageFromContent, proto } from '@whiskeysockets/baileys'
+import { generateWAMessageFromContent, generateWAMessageContent, proto } from '@whiskeysockets/baileys'
 import config from '../config.js'
 
 function toArray(value) {
@@ -16,6 +16,16 @@ function getPlugins() {
   if (Array.isArray(source)) return source
   if (typeof source === 'object') return Object.values(source)
   return []
+}
+
+async function uploadImage(socket, buffer) {
+  const { imageMessage } = await generateWAMessageContent(
+    { image: buffer },
+    {
+      upload: (stream, opts) => socket.waUploadToServer(stream, opts)
+    }
+  )
+  return imageMessage
 }
 
 const handler = async (m, { conn }) => {
@@ -61,6 +71,21 @@ const handler = async (m, { conn }) => {
     menuText += '• #menu\n• #ping\n• #bot'
   }
 
+  let header = { hasMediaAttachment: false }
+  try {
+    const buffer = await global.getBannerBuffer()
+    if (buffer && typeof socket?.waUploadToServer === 'function') {
+      header = {
+        hasMediaAttachment: true,
+        imageMessage: await uploadImage(socket, buffer)
+      }
+    }
+  } catch (e) {
+    console.error('[MENU][IMG]', e?.message)
+  }
+
+  const total = [...categories.values()].reduce((n, v) => n + unique(v).length, 0) || 0
+
   const msg = generateWAMessageFromContent(m.chat, {
     viewOnceMessage: {
       message: {
@@ -73,11 +98,9 @@ const handler = async (m, { conn }) => {
             text: menuText.trim()
           }),
           footer: proto.Message.InteractiveMessage.Footer.fromObject({
-            text: '© Makima Bot'
+            text: `© Makima Bot · ${total} comandos`
           }),
-          header: proto.Message.InteractiveMessage.Header.fromObject({
-            hasMediaAttachment: false
-          }),
+          header: proto.Message.InteractiveMessage.Header.fromObject(header),
           nativeFlowMessage: proto.Message.InteractiveMessage.NativeFlowMessage.fromObject({
             messageParamsJson: '',
             buttons: [
