@@ -78,7 +78,9 @@ export class CmdsLoader {
 
                 fn.__file   = filePath
                 fn.command  = mod.command
+                fn.view     = mod.view
                 fn.tags     = mod.tags
+                fn.category = mod.category
                 fn.owner    = mod.owner
                 fn.rowner   = mod.rowner
                 fn.premium  = mod.premium
