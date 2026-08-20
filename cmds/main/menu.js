@@ -197,10 +197,12 @@ function unique(arr) {
 }
 
 function getPlugins(ctx = {}) {
+  const loader = ctx.loader || global.loader
   const source =
     ctx.plugins ||
     ctx.plugin_list ||
     ctx.commands ||
+    (typeof loader?.getAll === 'function' && loader.getAll()) ||
     globalThis.plugins ||
     globalThis.commands ||
     global.plugins ||
@@ -214,15 +216,15 @@ function getPlugins(ctx = {}) {
   return []
 }
 
-const handler = async (m, { conn }) => {
+const handler = async (m, { conn, plugins, loader }) => {
   const sock = conn || global.conn
-  const plugins = getPlugins()
+  const pluginsList = getPlugins({ plugins, loader })
 
-  if (!plugins.length) return m.reply('No hay comandos cargados.')
+  if (!pluginsList.length) return m.reply('No hay comandos cargados.')
 
   const categories = new Map()
 
-  for (const plugin of plugins) {
+  for (const plugin of pluginsList) {
     if (!plugin || plugin.disabled || plugin.hidden) continue
 
     const views = unique(

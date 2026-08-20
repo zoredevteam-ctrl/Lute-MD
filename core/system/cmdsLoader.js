@@ -9,6 +9,9 @@ export class CmdsLoader {
         this.log      = log
         this.commands = new Map()
         this._cache   = new Map() // filePath → timestamp cargado
+        global.plugins  = this.commands
+        global.commands = this.commands
+        global.loader   = this
     }
 
     async loadAll() {

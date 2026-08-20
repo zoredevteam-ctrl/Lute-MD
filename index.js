@@ -55,6 +55,7 @@ function showBanner() {
 }
 
 const loader      = new CmdsLoader(cmdsDir, log)
+global.loader     = loader
 const loadedEvents = new Set()
 
 async function loadEventFiles(conn) {

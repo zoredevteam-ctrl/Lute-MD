@@ -230,6 +230,8 @@ export async function mainHandler(m, conn, loader) {
                 user,
                 group,
                 db:           database.data,
+                plugins:      loader.getAll(),
+                loader,
             })
         } catch (e) {
             const stack = e?.stack?.split('\n') || []
