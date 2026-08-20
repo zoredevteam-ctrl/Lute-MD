@@ -1,14 +1,19 @@
 const handler = async (m, { conn }) => {
+    const sent = await conn.sendMessage(m.chat, {
+        text: '⚘ 𝘊𝘢𝘭𝘤𝘶𝘭𝘢𝘯𝘥𝘰... ⚘'
+    }, { quoted: m })
+
     const start = Date.now()
 
-    await conn.sendMessage(m.chat, {
-        text: '𑁍'
-    }, { quoted: m })
+    // Pequeña espera para medir la respuesta
+    await new Promise(resolve => setTimeout(resolve, 50))
 
     const ms = Date.now() - start
 
     await conn.sendMessage(m.chat, {
-        text: `⚘ ${ms}ms ⚘`
+        text: `𑁍 𝙋𝙞𝙣𝙜 𑁍\n> ✦ ${ms}ms`
+    }, {
+        edit: sent.key
     })
 }
 
