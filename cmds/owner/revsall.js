@@ -51,14 +51,14 @@ var handler = async (m, { conn }) => {
       response += 'No se detectaron errores de sintaxis.'
     }
 
-    await conn.reply(m.chat, response, m);
+    await conn.sendMessage(m.chat, { text: response }, { quoted: m });
 
     await conn.sendMessage(m.chat, {
       react: { text: '✅', key: m.key }
     });
 
   } catch (err) {
-    conn.reply(m.chat, `Error: ${err.message}`, m);
+    await conn.sendMessage(m.chat, { text: `Error: ${err.message}` }, { quoted: m });
   }
 }
 
