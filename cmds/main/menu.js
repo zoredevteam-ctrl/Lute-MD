@@ -1,5 +1,10 @@
 import { generateWAMessageFromContent, prepareWAMessageMedia } from '@whiskeysockets/baileys'
+import { readdirSync } from 'fs'
+import { join, dirname } from 'path'
+import { fileURLToPath, pathToFileURL } from 'url'
 import config from '../config.js'
+
+const CMDS_DIR = join(dirname(fileURLToPath(import.meta.url)), '..')
 
 async function fetchBuffer(url) {
   const res = await fetch(url)
@@ -216,10 +221,39 @@ function getPlugins(ctx = {}) {
   return []
 }
 
+async function loadPluginsFromDisk() {
+  const files = []
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = join(dir, entry.name)
+      if (entry.isDirectory()) walk(full)
+      else if (entry.name.endsWith('.js')) files.push(full)
+    }
+  }
+  try { walk(CMDS_DIR) } catch { return [] }
+
+  const mods = []
+  for (const file of files) {
+    try {
+      const mod = (await import(pathToFileURL(file).href + `?t=${Date.now()}`)).default
+      if (!mod) continue
+      const cmds = toArray(mod.command).map(v => String(v || '').trim()).filter(Boolean)
+      if (!cmds.length) continue
+      mods.push(mod)
+    } catch (e) {
+      console.error('[MENU][FALLBACK]', file.split('/').pop(), e.message)
+    }
+  }
+  return mods
+}
+
 const handler = async (m, { conn, plugins, loader }) => {
   const sock = conn || global.conn
-  const pluginsList = getPlugins({ plugins, loader })
+  let pluginsList = getPlugins({ plugins, loader })
 
+  if (!pluginsList.length) {
+    pluginsList = await loadPluginsFromDisk()
+  }
   if (!pluginsList.length) return m.reply('No hay comandos cargados.')
 
   const categories = new Map()
