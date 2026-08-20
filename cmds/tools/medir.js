@@ -36,5 +36,5 @@ const handler = async (m, { conn, who }) => {
 }
 
 handler.command = ['random', 'banano', 'medir', 'pp']
-handler.tags    = ['fun']
+handler.tags    = ['tools']
 export default handler
