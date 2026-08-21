@@ -94,7 +94,6 @@ const FASES = {
         ]
     },
 
-    // ── FINALES ───────────────────────────────────────────────────────────────
     final_llorar: {
         text: `*ᐛ🎀* Llora si quieres.\n> Las lágrimas no me afectan.\n> Pero sí me parecen... entretenidas. 🔴\n\n> *(Fin de la historia. Perdiste.)*`,
         buttons: []
@@ -135,7 +134,7 @@ async function enviarFase(conn, chat, userJid, faseId, ctx) {
 
     if (fase.buttons.length === 0) {
         await conn.sendMessage(chat, {
-            text:     fase.text,
+            text: fase.text,
             mentions: [userJid],
             contextInfo: ctx
         })
@@ -155,7 +154,7 @@ async function enviarFase(conn, chat, userJid, faseId, ctx) {
             message: {
                 interactiveMessage: {
                     header: { title: '🔴 Maki MD', hasMediaAttachment: false },
-                    body:   { text: fase.text },
+                    body: { text: fase.text },
                     footer: { text: '🔴 Makima · ZoreDevTeam' },
                     nativeFlowMessage: { buttons },
                     contextInfo: {
@@ -172,21 +171,24 @@ async function enviarFase(conn, chat, userJid, faseId, ctx) {
 }
 
 const handler = async (m, { conn }) => {
-    const ctx  = await buildCtx()
-    const body = m.body?.trim().toLowerCase()
+    const ctx = await buildCtx()
 
-    // Si es respuesta de botón
-    if (FASES[body]) {
-        return enviarFase(conn, m.chat, m.sender, body, ctx)
+    const faseId =
+        m.buttonId ||
+        m.message?.buttonsResponseMessage?.selectedButtonId ||
+        m.message?.listResponseMessage?.singleSelectReply?.selectedRowId ||
+        m.body?.trim()
+
+    if (FASES[faseId]) {
+        return enviarFase(conn, m.chat, m.sender, faseId, ctx)
     }
 
-    // Inicio de la historia
     const messageContent = {
         viewOnceMessage: {
             message: {
                 interactiveMessage: {
                     header: { title: '🔴 Maki MD', hasMediaAttachment: false },
-                    body:   { text: `*ᐛ🎀* Hola *${m.pushName}*.\n> Una pregunta importante.\n> ¿Me amas?` },
+                    body: { text: `*ᐛ🎀* Hola *${m.pushName}*.\n> Una pregunta importante.\n> ¿Me amas?` },
                     footer: { text: '🔴 Makima · ZoreDevTeam' },
                     nativeFlowMessage: {
                         buttons: [
@@ -205,5 +207,5 @@ const handler = async (m, { conn }) => {
 }
 
 handler.command = ['hola', 'makima']
-handler.tags    = ['tools']
+handler.tags = ['tools']
 export default handler
