@@ -4,7 +4,7 @@ const handler = async (m, { conn }) => {
     const faseId =
         m.buttonId ||
         m.message?.buttonsResponseMessage?.selectedButtonId ||
-        m.body?.trim()
+        m.message?.listResponseMessage?.singleSelectReply?.selectedRowId
 
     if (faseId) {
         await conn.sendMessage(m.chat, { text: `✅ Éxito` })
