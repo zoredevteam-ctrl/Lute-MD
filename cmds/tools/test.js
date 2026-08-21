@@ -1,40 +1,39 @@
 import { generateWAMessageFromContent } from '@whiskeysockets/baileys'
 
 const handler = async (m, { conn }) => {
-    const faseId =
-        m.buttonId ||
-        m.message?.buttonsResponseMessage?.selectedButtonId ||
-        m.message?.listResponseMessage?.singleSelectReply?.selectedRowId
+  const id =
+    m.buttonId ||
+    m.message?.buttonsResponseMessage?.selectedButtonId ||
+    m.message?.listResponseMessage?.singleSelectReply?.selectedRowId
 
-    if (faseId) {
-        await conn.sendMessage(m.chat, { text: `✅ Éxito` })
-        return
-    }
+  if (id) {
+    await conn.sendMessage(m.chat, { text: '✅ Éxito' }, { quoted: m })
+    return
+  }
 
-    const buttons = [
-        { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '🔵 Infiel', id: 'btn_azul' }) },
-        { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '🟢 Sexo?', id: 'btn_verde' }) },
-        { name: 'quick_reply', buttonParamsJson: JSON.stringify({ display_text: '🔴 Te gustó', id: 'btn_rojo' }) }
-    ]
+  const message = {
+    text: 'Pulsa un botón criatura.',
+    buttons: [
+      { buttonId: 'btn_infiel', buttonText: { displayText: '🔵 Infiel' }, type: 1 },
+      { buttonId: 'btn_sexo', buttonText: { displayText: '🟢 Sexo?' }, type: 1 },
+      { buttonId: 'btn_gusto', buttonText: { displayText: '🔴 Te gustó' }, type: 1 }
+    ],
+    headerType: 1
+  }
 
-    const messageContent = {
-        viewOnceMessage: {
-            message: {
-                interactiveMessage: {
-                    header: { title: '🎛️ Elije', hasMediaAttachment: false },
-                    body: { text: 'Pulsa un botón para probar la respuesta.' },
-                    footer: { text: 'Pervertidos · ZoreDevTeam' },
-                    nativeFlowMessage: { buttons },
-                    contextInfo: { mentionedJid: [m.sender] }
-                }
-            }
-        }
-    }
-
-    const msg = generateWAMessageFromContent(m.chat, messageContent, { userJid: conn.user.id })
-    await conn.relayMessage(m.chat, msg.message, { messageId: msg.key.id })
+  await conn.sendMessage(m.chat, message, { quoted: m })
 }
 
-handler.command = ['tes']
+handler.before = async (m, { conn }) => {
+  const id =
+    m.buttonId ||
+    m.message?.buttonsResponseMessage?.selectedButtonId ||
+    m.message?.listResponseMessage?.singleSelectReply?.selectedRowId
+  if (!id) return
+  await conn.sendMessage(m.chat, { text: '✅ Éxito' }, { quoted: m })
+  return true
+}
+
+handler.command = ['1']
 handler.tags = ['tools']
 export default handler
